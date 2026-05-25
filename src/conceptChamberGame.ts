@@ -23,6 +23,7 @@ const CHAMBER_HOTSPOTS: ChamberHotspot[] = [
   { id: "purple-route", kind: "pipe", label: "Purple toxic reroute", x: 72.0, y: 45.0, width: 7.4, height: 10.0 },
   { id: "emergency-jam", kind: "emergency", label: "Emergency jam button", x: 62.2, y: 88.6, width: 10.2, height: 8.2 },
 ];
+const INITIAL_REPAIRED_PIPE_IDS = ["blue-route", "green-route"];
 
 export class ConceptChamberGame {
   private readonly layer = this.requiredElement("concept-hotspot-layer");
@@ -32,6 +33,7 @@ export class ConceptChamberGame {
   private readonly jamText = this.requiredElement("concept-jammed");
   private readonly pipeText = this.requiredElement("concept-pipes");
   private readonly statusText = this.requiredElement("concept-status");
+  private readonly nextActionText = this.requiredElement("concept-next-action");
   private readonly overlay = this.requiredElement("concept-overlay");
   private readonly stateTitle = this.requiredElement("concept-state-title");
   private readonly stateDetail = this.requiredElement("concept-state-detail");
@@ -44,7 +46,7 @@ export class ConceptChamberGame {
   private jammed = 0;
   private routed = 2;
   private emergencyUsed = false;
-  private repairedPipes = new Set<string>();
+  private repairedPipes = new Set<string>(INITIAL_REPAIRED_PIPE_IDS);
   private jammedPlates = new Set<string>();
   private collectedCrates = new Set<string>();
   private lastTick = performance.now();
@@ -73,10 +75,13 @@ export class ConceptChamberGame {
     this.routed = 2;
     this.emergencyUsed = false;
     this.repairedPipes.clear();
+    for (const pipeId of INITIAL_REPAIRED_PIPE_IDS) {
+      this.repairedPipes.add(pipeId);
+    }
     this.jammedPlates.clear();
     this.collectedCrates.clear();
     this.overlay.classList.add("is-hidden");
-    this.statusText.textContent = "The chamber is live. Repair routes and jam plates before pressure peaks.";
+    this.statusText.textContent = "Start with a crate or tap the red pipe repair ring.";
     this.renderHotspots();
     this.updateHud();
   }
@@ -116,6 +121,7 @@ export class ConceptChamberGame {
       jammed: this.jammed,
       routed: this.routed,
       emergencyUsed: this.emergencyUsed,
+      nextAction: this.nextAction(),
     };
   }
 
@@ -238,12 +244,15 @@ export class ConceptChamberGame {
     this.crateText.textContent = `${this.cratesHeld}`;
     this.jamText.textContent = `${this.jammed}/3`;
     this.pipeText.textContent = `${this.routed}/3`;
+    this.nextActionText.textContent = this.nextAction();
   }
 
   private classFor(hotspot: ChamberHotspot): string {
     if (this.isResolved(hotspot)) return "is-resolved";
-    if (hotspot.kind === "pipe" && !this.repairedPipes.has(hotspot.id)) return "is-urgent";
+    if (hotspot.kind === "pipe" && this.routed < 3) return "is-urgent";
     if (hotspot.kind === "jam" && this.cratesHeld > 0) return "is-ready";
+    if (hotspot.kind === "crate" && this.cratesHeld === 0 && this.jammed < 3) return "is-needed";
+    if (hotspot.kind === "emergency" && this.pressure >= 76) return "is-urgent";
     return "";
   }
 
@@ -268,6 +277,25 @@ export class ConceptChamberGame {
     return `${String(Math.floor(whole / 60)).padStart(2, "0")}:${String(whole % 60).padStart(2, "0")}`;
   }
 
+  private nextAction(): string {
+    if (this.routed < 3) {
+      return "Tap the red REPAIR ring on the toxic pipe.";
+    }
+    if (this.jammed < 3 && this.cratesHeld <= 0) {
+      return "Tap a gold crate ring, then tap a numbered jam plate.";
+    }
+    if (this.jammed < 3) {
+      return "Tap a glowing numbered plate to jam it with your crate.";
+    }
+    if (this.pressure >= 76 && !this.emergencyUsed) {
+      return "Pressure is high: tap Emergency Jam to buy time.";
+    }
+    if (this.jammed >= 3 && this.routed >= 3) {
+      return "Objectives green. Keep pressure under 90%.";
+    }
+    return "Stabilize routes and plates before pressure peaks.";
+  }
+
   private requiredElement<T extends HTMLElement = HTMLElement>(id: string): T {
     const element = document.getElementById(id);
     if (!element) throw new Error(`Missing #${id}`);
@@ -283,4 +311,3 @@ export class ConceptChamberGame {
     };
   }
 }
-

@@ -18,13 +18,11 @@ The app now uses the original gameplay concept image directly for the Main Chamb
 
 - `public/assets/concept-gameplay.png`
 
-Pipe Lab uses cropped pipe tiles from the provided pipe sheet:
+Pipe Lab uses the provided pipe sheet as a single sprite source:
 
-- `public/assets/extracted/pipe-blue-straight.png`
-- `public/assets/extracted/pipe-blue-elbow.png`
-- `public/assets/extracted/pipe-blue-tee.png`
-- `public/assets/extracted/pipe-blue-cross.png`
-- `public/assets/extracted/pipe-blue-valve.png`
+- `public/assets/pipe-sheet.png`
+
+The public sheet keeps the original frame geometry but removes the baked checkerboard background to alpha so the tiles sit cleanly on the board. The older extracted pipe PNGs are legacy reference artifacts and are not used by the Pipe Lab renderer.
 
 Sorting Sprint still uses clean temporary SVG assets that match the visual language:
 

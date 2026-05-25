@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-05-24
+Last updated: 2026-05-25
 
 ## Role Model
 
@@ -25,7 +25,7 @@ The app opens to a root menu with three selectable mini-games.
 
 ### Main Chamber
 
-The main visual target is the original concept gameplay image. The game uses that chamber as the playfield and overlays touch/click hotspots for:
+The main visual target is the original concept gameplay image. The game uses that chamber as the playfield, adds a persistent mission/next-action panel, and overlays touch/click hotspots for:
 
 - collecting crates
 - jamming numbered compactor plates
@@ -35,11 +35,11 @@ The main visual target is the original concept gameplay image. The game uses tha
 
 ### Pipe Lab
 
-A pipe-rotation sub-game using cropped pipe assets from the provided pipe sheet. Players tap/click tiles to rotate them and connect the inlet to the outlet.
+A pipe-rotation sub-game using the provided pipe sheet as a single centered sprite source. Players tap/click tiles to rotate them and connect the inlet to the outlet, with visible flow progress and leak markers.
 
 ### Sorting Sprint
 
-The first playable sorting prototype is preserved as an arcade sub-game with keyboard movement, pickup/drop, throwing, sorting, jam plate, pressure, timer, and restart.
+The first playable sorting prototype is preserved as a keyboard-first arcade sub-game with movement, pickup/drop, throwing, sorting, jam plate, pressure, timer, and restart.
 
 ## Milestone Sequence
 
@@ -58,9 +58,10 @@ The first playable sorting prototype is preserved as an arcade sub-game with key
 
 ## Current Next Actions
 
-- Deploy the three-game menu build.
-- Collect playtest notes on which mini-game should become the campaign core.
-- Improve Main Chamber interactions without drifting from the concept art.
+- Run focused playtests on whether Main Chamber should become the campaign core.
+- Expand Main Chamber from hotspot prototype into pipe repair/reroute events.
+- Add touch controls or a mobile disclaimer path for Sorting Sprint.
+- Keep end-state overlays navigable so completed/failed mini-games can always return to the menu.
 
 ## Verification Log
 
@@ -69,3 +70,5 @@ The first playable sorting prototype is preserved as an arcade sub-game with key
 - `npm run deploy`: uploaded `dist/` to `/sitesindevelopment/games/Trash Compactor`.
 - `SMOKE_URL=https://sitesindevelopment.com/games/Trash%20Compactor/ npm run smoke`: passed against the public deployment.
 - Current smoke covers root menu, Main Chamber, Pipe Lab, Sorting Sprint, desktop viewports, and mobile touch interaction.
+- QA clarity pass added menu input labels, Main Chamber next-action guidance, Pipe Lab leak/flow feedback, and clearer Sorting Sprint keyboard objectives.
+- Pipe Lab now asserts that pipe tiles render from `pipe-sheet.png`, and smoke tests verify menu navigation from end-state overlays.

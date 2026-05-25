@@ -3,6 +3,11 @@ type PipeType = "source" | "sink" | "straight" | "elbow" | "tee" | "cross" | "bl
 type PipeRunState = "playing" | "won" | "failed";
 type PipeAssetShape = "valve" | "straight" | "elbow" | "tee" | "cross";
 
+interface PipeSheetFrame {
+  x: number;
+  y: number;
+}
+
 interface PipeCell {
   row: number;
   col: number;
@@ -27,12 +32,19 @@ const DIRS: Array<{ dir: Direction; dr: number; dc: number; mask: DirMask; oppos
   { dir: 3, dr: 0, dc: -1, mask: DirMask.West, opposite: DirMask.East },
 ];
 
-const PIPE_ASSET_FILES: Record<PipeAssetShape, string> = {
-  valve: "pipe-blue-valve.png",
-  straight: "pipe-blue-straight.png",
-  elbow: "pipe-blue-elbow.png",
-  tee: "pipe-blue-tee.png",
-  cross: "pipe-blue-cross.png",
+const PIPE_SHEET = {
+  fileName: "pipe-sheet.png",
+  width: 1086,
+  height: 1448,
+  frameSize: 195,
+};
+
+const PIPE_SHEET_FRAMES: Record<PipeAssetShape, PipeSheetFrame> = {
+  straight: { x: 18, y: 184 },
+  elbow: { x: 238, y: 184 },
+  tee: { x: 456, y: 184 },
+  cross: { x: 675, y: 184 },
+  valve: { x: 891, y: 184 },
 };
 
 const VISUAL_ROTATION_OFFSET: Record<PipeAssetShape, number> = {
@@ -43,7 +55,7 @@ const VISUAL_ROTATION_OFFSET: Record<PipeAssetShape, number> = {
   cross: 0,
 };
 
-const pipeAssetUrl = (fileName: string) => `${import.meta.env.BASE_URL}assets/extracted/${fileName}`;
+const pipeSheetUrl = () => `${import.meta.env.BASE_URL}assets/${PIPE_SHEET.fileName}`;
 
 const LEVEL_TEMPLATE: Array<Array<Omit<PipeCell, "row" | "col" | "initialRotation">>> = [
   [
@@ -103,6 +115,7 @@ export class PipeGame {
   private readonly timeText = this.requiredElement("pipe-time-text");
   private readonly movesText = this.requiredElement("pipe-moves-text");
   private readonly leaksText = this.requiredElement("pipe-leaks-text");
+  private readonly progressText = this.requiredElement("pipe-progress-text");
   private readonly feedback = this.requiredElement("pipe-feedback");
   private readonly objective = this.requiredElement("pipe-objective-text");
   private readonly overlay = this.requiredElement("pipe-overlay");
@@ -111,6 +124,7 @@ export class PipeGame {
 
   private cells: PipeCell[][] = [];
   private powered = new Set<string>();
+  private leakEdges = new Set<string>();
   private runState: PipeRunState = "playing";
   private active = true;
   private moves = 0;
@@ -152,7 +166,8 @@ export class PipeGame {
     this.timeLeft = 90;
     this.hinted = false;
     this.overlay.classList.add("is-hidden");
-    this.objective.textContent = "Connect the blue inlet to the outlet.";
+    this.objective.textContent = "Goal: tap pipe tiles to rotate blue flow from INLET to OUTLET.";
+    this.feedback.textContent = "Tap any unlocked pipe tile to rotate it.";
     this.evaluateFlow();
     this.render();
     this.updateHud();
@@ -257,6 +272,7 @@ export class PipeGame {
           "pipe-tile",
           `pipe-tile-${cell.type}`,
           this.powered.has(key) ? "is-powered" : "",
+          this.hasLeak(cell) ? "has-leak" : "",
           cell.locked ? "is-locked" : "",
           this.hinted && cell.solutionRotation !== cell.rotation && !cell.locked ? "needs-rotation" : "",
         ]
@@ -268,7 +284,7 @@ export class PipeGame {
         tile.dataset.rotation = String(cell.rotation);
         tile.disabled = Boolean(cell.locked || cell.type === "blocked" || this.runState !== "playing");
         tile.ariaLabel = this.labelFor(cell);
-        tile.innerHTML = this.artFor(cell);
+        tile.innerHTML = this.artFor(cell) + this.leakArtFor(cell);
         this.boardElement.append(tile);
       }
     }
@@ -279,6 +295,7 @@ export class PipeGame {
     const sink = this.findCell("sink");
     const queue = [source];
     const visited = new Set<string>([this.keyFor(source.row, source.col)]);
+    const leaks = new Set<string>();
     let leakCount = 0;
 
     while (queue.length > 0) {
@@ -291,12 +308,14 @@ export class PipeGame {
 
         const neighbor = this.cells[cell.row + direction.dr]?.[cell.col + direction.dc];
         if (!neighbor) {
+          leaks.add(this.leakKeyFor(cell.row, cell.col, direction.dir));
           leakCount += 1;
           continue;
         }
 
         const neighborMask = this.maskFor(neighbor);
         if ((neighborMask & direction.opposite) === 0) {
+          leaks.add(this.leakKeyFor(cell.row, cell.col, direction.dir));
           leakCount += 1;
           continue;
         }
@@ -311,6 +330,7 @@ export class PipeGame {
 
     this.powered = visited;
     this.leaks = this.powered.has(this.keyFor(sink.row, sink.col)) ? 0 : leakCount;
+    this.leakEdges = this.leaks === 0 ? new Set<string>() : leaks;
   }
 
   private isSolved(): boolean {
@@ -332,13 +352,16 @@ export class PipeGame {
     this.pressureFill.style.width = `${Math.round(this.pressure)}%`;
     this.pressureText.textContent = `${Math.round(this.pressure)}%`;
     this.timeText.textContent = this.formatTime(this.timeLeft);
+    this.progressText.textContent = this.isSolved()
+      ? "Outlet connected. Pipeline secured."
+      : `Blue flow reached ${this.powered.size} tile${this.powered.size === 1 ? "" : "s"}.`;
     this.movesText.textContent = `Moves ${this.moves}`;
     this.leaksText.textContent = `Leaks ${this.leaks}`;
   }
 
   private pingRoute(): void {
     this.hinted = !this.hinted;
-    this.feedback.textContent = this.hinted ? "Misaligned route pieces are tagged." : "Route ping cleared.";
+    this.feedback.textContent = this.hinted ? "Misaligned route pieces are tagged in amber." : "Route hints cleared.";
     this.render();
   }
 
@@ -395,7 +418,30 @@ export class PipeGame {
         ? `<span class="pipe-terminal-marker pipe-terminal-${cell.type}" aria-hidden="true"></span>`
         : "";
 
-    return `<img class="pipe-asset" src="${pipeAssetUrl(PIPE_ASSET_FILES[shape])}" style="--pipe-rotation: ${rotation}deg" alt="" draggable="false" />${terminalMarker}`;
+    return `<span class="pipe-sheet-piece" style="${this.sheetStyleFor(shape, rotation)}" aria-hidden="true"><img class="pipe-sheet-image" src="${pipeSheetUrl()}" style="${this.sheetImageStyleFor(shape)}" alt="" draggable="false" /></span>${terminalMarker}`;
+  }
+
+  private sheetStyleFor(shape: PipeAssetShape, rotation: number): string {
+    return [
+      `--pipe-rotation: ${rotation}deg`,
+      shape === "valve" ? "--pipe-scale: 1.015" : "--pipe-scale: 1",
+    ].join("; ");
+  }
+
+  private sheetImageStyleFor(shape: PipeAssetShape): string {
+    const frame = PIPE_SHEET_FRAMES[shape];
+    const sheetWidth = (PIPE_SHEET.width / PIPE_SHEET.frameSize) * 100;
+    const sheetHeight = (PIPE_SHEET.height / PIPE_SHEET.frameSize) * 100;
+    const left = -(frame.x / PIPE_SHEET.frameSize) * 100;
+    const top = -(frame.y / PIPE_SHEET.frameSize) * 100;
+
+    return [`width: ${sheetWidth}%`, `height: ${sheetHeight}%`, `left: ${left}%`, `top: ${top}%`].join("; ");
+  }
+
+  private leakArtFor(cell: PipeCell): string {
+    return DIRS.filter((direction) => this.leakEdges.has(this.leakKeyFor(cell.row, cell.col, direction.dir)))
+      .map((direction) => `<span class="pipe-leak-marker leak-${direction.dir}" aria-hidden="true"></span>`)
+      .join("");
   }
 
   private assetShapeFor(cell: PipeCell): PipeAssetShape {
@@ -417,7 +463,7 @@ export class PipeGame {
     if (cell.type === "source") return "Blue inlet source";
     if (cell.type === "sink") return "Blue outlet target";
     if (cell.type === "blocked") return "Blocked plate";
-    return `${cell.type} pipe at row ${cell.row + 1}, column ${cell.col + 1}. Rotation ${cell.rotation}`;
+    return `Tap to rotate ${cell.type} pipe at row ${cell.row + 1}, column ${cell.col + 1}. Rotation ${cell.rotation}`;
   }
 
   private scrambledRotation(cell: Omit<PipeCell, "row" | "col" | "initialRotation">): number {
@@ -435,6 +481,14 @@ export class PipeGame {
     return `${row}:${col}`;
   }
 
+  private leakKeyFor(row: number, col: number, direction: Direction): string {
+    return `${row}:${col}:${direction}`;
+  }
+
+  private hasLeak(cell: PipeCell): boolean {
+    return DIRS.some((direction) => this.leakEdges.has(this.leakKeyFor(cell.row, cell.col, direction.dir)));
+  }
+
   private formatTime(seconds: number): string {
     const whole = Math.ceil(seconds);
     return `${String(Math.floor(whole / 60)).padStart(2, "0")}:${String(whole % 60).padStart(2, "0")}`;
@@ -447,10 +501,8 @@ export class PipeGame {
   }
 
   private preloadAssets(): void {
-    for (const fileName of Object.values(PIPE_ASSET_FILES)) {
-      const image = new Image();
-      image.src = pipeAssetUrl(fileName);
-    }
+    const image = new Image();
+    image.src = pipeSheetUrl();
   }
 
   private exposeTestHooks(): void {

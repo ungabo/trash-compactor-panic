@@ -516,7 +516,7 @@ export class MainScene extends Phaser.Scene {
     if (statusText) {
       statusText.textContent =
         this.runState === "playing"
-          ? "Sort 15 items. Move the crate onto the numbered jam plate to slow pressure."
+          ? "Goal: sort 15 items into matching chutes. Crate on plate slows pressure."
           : this.runState === "won"
             ? "Shift complete. Somehow."
             : "Failure report filed.";
@@ -556,7 +556,7 @@ export class MainScene extends Phaser.Scene {
 
     brandTitle?.replaceChildren("Sorting", document.createElement("br"), "Sprint");
     if (brandTagline) {
-      brandTagline.textContent = "Trash Compactor Panic sub-game";
+      brandTagline.textContent = "Keyboard-only trash sorting drill";
     }
   }
 

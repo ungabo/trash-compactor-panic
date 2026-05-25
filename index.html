@@ -28,20 +28,38 @@
               <button id="menu-chamber-button" class="menu-card" type="button">
                 <span>Main Chamber</span>
                 <small>Repair pipes, grab crates, jam compactor plates.</small>
+                <em>Touch / click</em>
               </button>
               <button id="menu-pipe-button" class="menu-card" type="button">
                 <span>Pipe Lab</span>
                 <small>Rotate provided pipe assets into a complete route.</small>
+                <em>Touch / click</em>
               </button>
               <button id="menu-sort-button" class="menu-card" type="button">
                 <span>Sorting Sprint</span>
                 <small>Arcade trash sorting under wall pressure.</small>
+                <em>Keyboard drill</em>
               </button>
             </div>
           </div>
         </section>
 
         <section id="concept-screen" class="concept-screen is-hidden" aria-label="Trash Compactor Panic main chamber">
+          <div class="concept-brief-panel metal-panel" aria-live="polite">
+            <div>
+              <div class="panel-label">Main Chamber Goal</div>
+              <p>Repair the broken pipe route, jam all 3 numbered plates, and keep pressure below 90%.</p>
+            </div>
+            <div class="concept-brief-steps">
+              <span>1. Tap crate</span>
+              <span>2. Tap plate</span>
+              <span>3. Tap red repair</span>
+            </div>
+            <div class="concept-next-action">
+              <span>Next</span>
+              <b id="concept-next-action">Tap a red repair ring or grab a crate.</b>
+            </div>
+          </div>
           <div class="concept-viewport">
             <div class="concept-stage">
               <img src="./assets/concept-gameplay.png" alt="Trash Compactor Panic chamber concept" draggable="false" />
@@ -61,7 +79,11 @@
                 <div class="state-card metal-panel">
                   <div id="concept-state-title" class="state-title">Chamber Stabilized</div>
                   <p id="concept-state-detail">Pipes rerouted, plates jammed, and nobody got flattened.</p>
-                  <button id="concept-restart-button" type="button">Restart</button>
+                  <div class="state-actions">
+                    <button id="concept-restart-button" type="button">Restart</button>
+                    <button id="concept-menu-button" type="button">Menu</button>
+                    <button id="concept-pipe-button" type="button">Pipe Lab</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -92,7 +114,9 @@
           <div class="pipe-layout">
             <aside class="pipe-panel metal-panel">
               <div class="panel-label">Objectives</div>
-              <p id="pipe-objective-text">Connect the blue inlet to the outlet.</p>
+              <p id="pipe-objective-text">Goal: tap pipe tiles to rotate blue flow from INLET to OUTLET.</p>
+              <p class="pipe-help-text">Blue glow shows connected flow. Red sparks mark open leaks.</p>
+              <p id="pipe-progress-text" class="pipe-progress-text">Flow reached 1 tile.</p>
               <p id="pipe-moves-text" class="muted">Moves 0</p>
               <p id="pipe-leaks-text" class="muted">Leaks 0</p>
             </aside>
@@ -110,7 +134,7 @@
               <div class="panel-label">Control Console</div>
               <button id="pipe-reset-button" type="button">Reset Grid</button>
               <button id="pipe-new-button" type="button">New Scramble</button>
-              <button id="pipe-hint-button" type="button">Ping Route</button>
+              <button id="pipe-hint-button" type="button">Show Hints</button>
               <button id="pipe-main-button" type="button">Main Chamber</button>
             </aside>
           </div>
@@ -119,7 +143,11 @@
             <div class="state-card metal-panel">
               <div id="pipe-state-title" class="state-title">Pipeline Secured</div>
               <p id="pipe-state-detail">Flow restored before corporate noticed.</p>
-              <button id="pipe-restart-button" type="button">Play Again</button>
+              <div class="state-actions">
+                <button id="pipe-restart-button" type="button">Play Again</button>
+                <button id="pipe-menu-button" type="button">Menu</button>
+                <button id="pipe-chamber-button" type="button">Main Chamber</button>
+              </div>
             </div>
           </div>
         </section>
@@ -144,6 +172,7 @@
 
               <div class="objective-panel metal-panel">
                 <div class="panel-label">Objectives</div>
+                <div class="objective-line objective-detail">Keyboard sub-game: match items to the labeled chutes.</div>
                 <div id="objective-text" class="objective-line">Sort 0 / 15</div>
                 <div id="jam-state" class="objective-line muted">Jam plate inactive</div>
                 <div id="score-text" class="objective-line score">Score 0</div>
@@ -156,6 +185,7 @@
 
               <div class="how-panel metal-panel">
                 <div class="panel-label">How To Survive</div>
+                <p><b>Goal</b> sort 15 items before pressure hits 100%</p>
                 <p><b>WASD</b> move</p>
                 <p><b>E</b> pickup / drop</p>
                 <p><b>Space</b> throw carried item</p>
@@ -174,7 +204,10 @@
               <div class="state-card metal-panel">
                 <div id="state-title" class="state-title">Level Complete</div>
                 <p id="state-detail">Corporate appreciates your temporary usefulness.</p>
-                <button id="restart-button" type="button">Restart</button>
+                <div class="state-actions">
+                  <button id="restart-button" type="button">Restart</button>
+                  <button id="sort-menu-button" type="button">Menu</button>
+                </div>
               </div>
             </div>
           </section>

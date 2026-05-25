@@ -70,6 +70,9 @@ async function verifyRootMenu(page) {
   assert(await page.locator("#menu-chamber-button").isVisible(), "Main Chamber menu button should be visible.");
   assert(await page.locator("#menu-pipe-button").isVisible(), "Pipe Lab menu button should be visible.");
   assert(await page.locator("#menu-sort-button").isVisible(), "Sorting Sprint menu button should be visible.");
+  const menuText = (await page.locator("#menu-screen").innerText()).toLowerCase();
+  assert(menuText.includes("touch / click"), "Touch/click support should be visible on the menu.");
+  assert(menuText.includes("keyboard drill"), "Keyboard-only Sorting Sprint should be identified on the menu.");
 }
 
 async function verifyConceptChamber(page, inputMethod = "click") {
@@ -78,6 +81,10 @@ async function verifyConceptChamber(page, inputMethod = "click") {
   await page.waitForFunction(() => Boolean(window.__TCP_CHAMBER_TEST__), null, { timeout: 15000 });
   assert((await page.evaluate(() => window.__TCP_APP__?.getMode())) === "chamber", "Main Chamber mode did not activate.");
   assert(await page.locator("#concept-screen").isVisible(), "Concept chamber should be visible.");
+  assert(
+    (await page.locator("#concept-next-action").innerText()).includes("Tap"),
+    "Main Chamber should show a clear next action.",
+  );
 
   const imageLoaded = await page.locator(".concept-stage img").evaluate((img) => img.complete && img.naturalWidth > 1000);
   assert(imageLoaded, "Concept chamber image did not load.");
@@ -100,7 +107,7 @@ async function verifyConceptChamber(page, inputMethod = "click") {
   let afterJam = await getChamberState(page);
   assert(afterJam.jammed === 1, "Tapping a jam plate with a crate did not jam it.");
 
-  await activate('.concept-hotspot[data-hotspot="blue-route"]');
+  await activate('.concept-hotspot[data-hotspot="purple-route"]');
   let afterPipe = await getChamberState(page);
   assert(afterPipe.routed === 3, "Tapping a broken pipe did not reroute it.");
 
@@ -109,8 +116,13 @@ async function verifyConceptChamber(page, inputMethod = "click") {
   assert(afterEmergency.emergencyUsed === true, "Emergency Jam hotspot did not activate.");
 
   await page.evaluate(() => window.__TCP_CHAMBER_TEST__.forceFail());
+  await page.waitForSelector("#concept-overlay:not(.is-hidden)");
   const failed = await getChamberState(page);
   assert(failed.runState === "failed", "Concept chamber forced fail did not set failed state.");
+  assert(await page.locator("#concept-menu-button").isVisible(), "Concept end state should expose a Menu button.");
+  await page.locator("#concept-menu-button").click();
+  assert((await page.evaluate(() => window.__TCP_APP__?.getMode())) === "menu", "Concept end-state Menu button did not return to menu.");
+  await page.evaluate(() => window.__TCP_APP__.selectMode("chamber"));
   await page.evaluate(() => window.__TCP_CHAMBER_TEST__.reset());
   await page.waitForFunction(() => window.__TCP_CHAMBER_TEST__?.getState()?.runState === "playing");
 }
@@ -123,10 +135,19 @@ async function verifyPipeGame(page, inputMethod = "click") {
 
   const boardVisible = await page.locator("#pipe-board").isVisible();
   assert(boardVisible, "Pipe board should be visible.");
+  assert((await page.locator(".pipe-sheet-image").count()) > 0, "Pipe tiles should render from the original pipe sheet.");
+  assert(
+    (await page.locator(".pipe-sheet-image").first().getAttribute("src"))?.includes("pipe-sheet.png"),
+    "Pipe tile source should be the original pipe sheet.",
+  );
+  const pipeObjectiveText = await page.locator("#pipe-objective-text").innerText();
+  assert(pipeObjectiveText.toLowerCase().includes("tap"), "Pipe objective should tell touch users to tap tiles.");
+  assert(pipeObjectiveText.includes("INLET") && pipeObjectiveText.includes("OUTLET"), "Pipe objective should name the endpoints.");
 
   const initial = await getPipeState(page);
   assert(initial?.runState === "playing", "Pipe game should start in playing state.");
   assert(initial.poweredCount >= 1, "Pipe game should show flow from the source.");
+  assert(await page.locator(".pipe-leak-marker").first().isVisible(), "Open pipe leaks should be visible on the board.");
 
   const targetTile = page.locator('.pipe-tile[data-row="2"][data-col="1"]');
   const tileBox = await targetTile.boundingBox();
@@ -145,6 +166,10 @@ async function verifyPipeGame(page, inputMethod = "click") {
   await page.waitForSelector("#pipe-overlay:not(.is-hidden)");
   const solved = await getPipeState(page);
   assert(solved.runState === "won" && solved.solved === true, "Solved pipe route did not trigger win state.");
+  assert(await page.locator("#pipe-menu-button").isVisible(), "Pipe end state should expose a Menu button.");
+  await page.locator("#pipe-menu-button").click();
+  assert((await page.evaluate(() => window.__TCP_APP__?.getMode())) === "menu", "Pipe end-state Menu button did not return to menu.");
+  await page.evaluate(() => window.__TCP_APP__.selectMode("pipes"));
 
   await page.evaluate(() => window.__TCP_PIPE_TEST__.reset());
   await page.waitForFunction(() => window.__TCP_PIPE_TEST__?.getState()?.runState === "playing");
@@ -159,6 +184,10 @@ async function verifySortingMiniGame(page) {
   await page.waitForFunction(() => Boolean(window.__TCP_SORT_TEST__), null, { timeout: 15000 });
   assert((await page.evaluate(() => window.__TCP_APP__?.getMode())) === "sort", "Sorting Sprint mode did not activate.");
   assert(await isCanvasNonBlank(page), "Sorting mini-game canvas appears blank.");
+  assert(
+    (await page.locator(".objective-panel").innerText()).includes("Keyboard sub-game"),
+    "Sorting Sprint should clearly identify keyboard-first controls.",
+  );
 
   const initial = await getSortState(page);
   assert(initial?.runState === "playing", "Sorting mini-game should start in playing state.");
@@ -186,6 +215,17 @@ async function verifySortingMiniGame(page) {
   await page.evaluate(() => window.__TCP_SORT_TEST__.placeCrateOnJam());
   const jammed = await getSortState(page);
   assert(jammed.jamActive === true, "Jam plate did not activate in sorting mini-game.");
+
+  await page.evaluate(() => window.__TCP_SORT_TEST__.forceWin());
+  await page.waitForSelector("#state-overlay:not(.is-hidden)");
+  assert(await page.locator("#sort-menu-button").isVisible(), "Sorting end state should expose a Menu button.");
+  await page.locator("#sort-menu-button").click();
+  assert((await page.evaluate(() => window.__TCP_APP__?.getMode())) === "menu", "Sorting end-state Menu button did not return to menu.");
+  await page.evaluate(() => {
+    window.__TCP_APP__.selectMode("sort");
+    window.__TCP_SORT_TEST__.restart();
+  });
+  await page.waitForFunction(() => window.__TCP_SORT_TEST__?.getState()?.runState === "playing");
 }
 
 await mkdir(outputDir, { recursive: true });

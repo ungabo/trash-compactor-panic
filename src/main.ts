@@ -86,6 +86,11 @@ document.getElementById("menu-chamber-button")?.addEventListener("click", () => 
 document.getElementById("menu-pipe-button")?.addEventListener("click", () => selectMode("pipes"));
 document.getElementById("menu-sort-button")?.addEventListener("click", () => selectMode("sort"));
 document.getElementById("pipe-main-button")?.addEventListener("click", () => selectMode("chamber"));
+document.getElementById("concept-menu-button")?.addEventListener("click", () => selectMode("menu"));
+document.getElementById("concept-pipe-button")?.addEventListener("click", () => selectMode("pipes"));
+document.getElementById("pipe-menu-button")?.addEventListener("click", () => selectMode("menu"));
+document.getElementById("pipe-chamber-button")?.addEventListener("click", () => selectMode("chamber"));
+document.getElementById("sort-menu-button")?.addEventListener("click", () => selectMode("menu"));
 
 window.__TCP_APP__ = {
   getMode: () => currentMode,

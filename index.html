@@ -114,6 +114,7 @@
           <div class="pipe-layout">
             <aside class="pipe-panel metal-panel">
               <div class="panel-label">Objectives</div>
+              <p id="pipe-level-text" class="pipe-level-text">Level 1: Intake Bend</p>
               <p id="pipe-objective-text">Goal: tap pipe tiles to rotate blue flow from INLET to OUTLET.</p>
               <p class="pipe-help-text">Blue glow shows connected flow. Red sparks mark open leaks.</p>
               <p id="pipe-progress-text" class="pipe-progress-text">Flow reached 1 tile.</p>
@@ -123,8 +124,8 @@
 
             <section class="pipe-board-wrap" aria-label="Pipe puzzle board">
               <div class="pipe-ports">
-                <span class="port-label inlet">Inlet</span>
-                <span class="port-label outlet">Outlet</span>
+                <span id="pipe-inlet-label" class="port-label inlet">Inlet</span>
+                <span id="pipe-outlet-label" class="port-label outlet">Outlet</span>
               </div>
               <div id="pipe-board" class="pipe-board"></div>
               <div id="pipe-feedback" class="pipe-feedback" aria-live="polite">Tap pipe tiles to rotate them.</div>

@@ -35,7 +35,14 @@ The main visual target is the original concept gameplay image. The game uses tha
 
 ### Pipe Lab
 
-A pipe-rotation sub-game using the provided pipe sheet as a single centered sprite source. Players tap/click tiles to rotate them and connect the inlet to the outlet, with visible flow progress and leak markers.
+A pipe-rotation sub-game using the provided pipe sheet as a single centered sprite source. Players tap/click tiles to rotate them and connect the inlet to the outlet, with visible flow progress, leak markers, and pipe openings that extend to tile edges.
+
+Current Pipe Lab levels:
+
+- Intake Bend
+- Midline Detour
+- Upper Loop
+- Pressure Stair
 
 ### Sorting Sprint
 
@@ -71,4 +78,4 @@ The first playable sorting prototype is preserved as a keyboard-first arcade sub
 - `SMOKE_URL=https://sitesindevelopment.com/games/Trash%20Compactor/ npm run smoke`: passed against the public deployment.
 - Current smoke covers root menu, Main Chamber, Pipe Lab, Sorting Sprint, desktop viewports, and mobile touch interaction.
 - QA clarity pass added menu input labels, Main Chamber next-action guidance, Pipe Lab leak/flow feedback, and clearer Sorting Sprint keyboard objectives.
-- Pipe Lab now asserts that pipe tiles render from `pipe-sheet.png`, and smoke tests verify menu navigation from end-state overlays.
+- Pipe Lab now asserts that pipe tiles render from `pipe-sheet.png`, pipe openings draw edge connectors, `New Scramble` changes level endpoints, and smoke tests verify menu navigation from end-state overlays.

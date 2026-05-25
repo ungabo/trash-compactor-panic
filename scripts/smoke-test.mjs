@@ -148,10 +148,23 @@ async function verifyPipeGame(page, inputMethod = "click") {
   assert(initial?.runState === "playing", "Pipe game should start in playing state.");
   assert(initial.poweredCount >= 1, "Pipe game should show flow from the source.");
   assert(await page.locator(".pipe-leak-marker").first().isVisible(), "Open pipe leaks should be visible on the board.");
+  assert((await page.locator(".pipe-edge-connector").count()) > 0, "Pipe openings should render edge connectors.");
 
-  const targetTile = page.locator('.pipe-tile[data-row="2"][data-col="1"]');
+  await page.locator("#pipe-new-button").click();
+  await page.waitForTimeout(120);
+  const afterNewLevel = await getPipeState(page);
+  assert(afterNewLevel.levelIndex !== initial.levelIndex, "New Scramble should advance to a different pipe level.");
+  assert(
+    JSON.stringify(afterNewLevel.source) !== JSON.stringify(initial.source) ||
+      JSON.stringify(afterNewLevel.sink) !== JSON.stringify(initial.sink),
+    "Different pipe levels should move the inlet or outlet.",
+  );
+
+  const targetTile = page.locator(".pipe-tile:not([disabled])").first();
   const tileBox = await targetTile.boundingBox();
   assert(tileBox && tileBox.width >= 48 && tileBox.height >= 48, "Pipe tile touch target is too small.");
+  const targetRow = Number(await targetTile.getAttribute("data-row"));
+  const targetCol = Number(await targetTile.getAttribute("data-col"));
   if (inputMethod === "tap") {
     await targetTile.tap();
   } else {
@@ -159,8 +172,8 @@ async function verifyPipeGame(page, inputMethod = "click") {
   }
   await page.waitForTimeout(120);
   const afterTap = await getPipeState(page);
-  assert(afterTap.moves === initial.moves + 1, "Tapping a pipe did not rotate it.");
-  assert(afterTap.rotations[2][1] !== initial.rotations[2][1], "Tapped pipe rotation did not change.");
+  assert(afterTap.moves === afterNewLevel.moves + 1, "Tapping a pipe did not rotate it.");
+  assert(afterTap.rotations[targetRow][targetCol] !== afterNewLevel.rotations[targetRow][targetCol], "Tapped pipe rotation did not change.");
 
   await page.evaluate(() => window.__TCP_PIPE_TEST__.solve());
   await page.waitForSelector("#pipe-overlay:not(.is-hidden)");

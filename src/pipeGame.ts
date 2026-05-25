@@ -2,6 +2,7 @@ type Direction = 0 | 1 | 2 | 3;
 type PipeType = "source" | "sink" | "straight" | "elbow" | "tee" | "cross" | "blocked";
 type PipeRunState = "playing" | "won" | "failed";
 type PipeAssetShape = "valve" | "straight" | "elbow" | "tee" | "cross";
+type PipePathPoint = [number, number];
 
 interface PipeSheetFrame {
   x: number;
@@ -16,6 +17,12 @@ interface PipeCell {
   initialRotation: number;
   solutionRotation: number;
   locked?: boolean;
+}
+
+interface PipeLevel {
+  name: string;
+  path: PipePathPoint[];
+  blockers: PipePathPoint[];
 }
 
 const enum DirMask {
@@ -57,55 +64,85 @@ const VISUAL_ROTATION_OFFSET: Record<PipeAssetShape, number> = {
 
 const pipeSheetUrl = () => `${import.meta.env.BASE_URL}assets/${PIPE_SHEET.fileName}`;
 
-const LEVEL_TEMPLATE: Array<Array<Omit<PipeCell, "row" | "col" | "initialRotation">>> = [
-  [
-    { type: "elbow", rotation: 1, solutionRotation: 0 },
-    { type: "straight", rotation: 0, solutionRotation: 1 },
-    { type: "tee", rotation: 2, solutionRotation: 3 },
-    { type: "blocked", rotation: 0, solutionRotation: 0, locked: true },
-    { type: "elbow", rotation: 3, solutionRotation: 2 },
-    { type: "straight", rotation: 1, solutionRotation: 0 },
-  ],
-  [
-    { type: "tee", rotation: 1, solutionRotation: 0 },
-    { type: "elbow", rotation: 2, solutionRotation: 1 },
-    { type: "straight", rotation: 0, solutionRotation: 1 },
-    { type: "elbow", rotation: 0, solutionRotation: 3 },
-    { type: "tee", rotation: 0, solutionRotation: 2 },
-    { type: "elbow", rotation: 1, solutionRotation: 3 },
-  ],
-  [
-    { type: "source", rotation: 0, solutionRotation: 0, locked: true },
-    { type: "straight", rotation: 0, solutionRotation: 1 },
-    { type: "elbow", rotation: 3, solutionRotation: 2 },
-    { type: "straight", rotation: 1, solutionRotation: 0 },
-    { type: "tee", rotation: 2, solutionRotation: 1 },
-    { type: "elbow", rotation: 2, solutionRotation: 0 },
-  ],
-  [
-    { type: "straight", rotation: 0, solutionRotation: 1 },
-    { type: "tee", rotation: 3, solutionRotation: 0 },
-    { type: "elbow", rotation: 2, solutionRotation: 0 },
-    { type: "elbow", rotation: 3, solutionRotation: 2 },
-    { type: "straight", rotation: 0, solutionRotation: 1 },
-    { type: "tee", rotation: 1, solutionRotation: 2 },
-  ],
-  [
-    { type: "elbow", rotation: 0, solutionRotation: 1 },
-    { type: "straight", rotation: 1, solutionRotation: 0 },
-    { type: "tee", rotation: 0, solutionRotation: 3 },
-    { type: "elbow", rotation: 1, solutionRotation: 0 },
-    { type: "straight", rotation: 0, solutionRotation: 1 },
-    { type: "sink", rotation: 0, solutionRotation: 0, locked: true },
-  ],
-  [
-    { type: "blocked", rotation: 0, solutionRotation: 0, locked: true },
-    { type: "elbow", rotation: 1, solutionRotation: 2 },
-    { type: "straight", rotation: 0, solutionRotation: 1 },
-    { type: "tee", rotation: 2, solutionRotation: 0 },
-    { type: "elbow", rotation: 0, solutionRotation: 3 },
-    { type: "straight", rotation: 1, solutionRotation: 0 },
-  ],
+const BOARD_SIZE = 6;
+
+const PIPE_LEVELS: PipeLevel[] = [
+  {
+    name: "Intake Bend",
+    path: [
+      [2, 0],
+      [2, 1],
+      [2, 2],
+      [3, 2],
+      [3, 3],
+      [4, 3],
+      [4, 4],
+      [4, 5],
+    ],
+    blockers: [
+      [0, 3],
+      [5, 0],
+    ],
+  },
+  {
+    name: "Midline Detour",
+    path: [
+      [1, 0],
+      [1, 1],
+      [1, 2],
+      [2, 2],
+      [3, 2],
+      [3, 3],
+      [3, 4],
+      [3, 5],
+    ],
+    blockers: [
+      [0, 4],
+      [4, 1],
+      [5, 3],
+    ],
+  },
+  {
+    name: "Upper Loop",
+    path: [
+      [4, 0],
+      [4, 1],
+      [3, 1],
+      [2, 1],
+      [2, 2],
+      [2, 3],
+      [2, 4],
+      [1, 4],
+      [0, 4],
+      [0, 5],
+    ],
+    blockers: [
+      [1, 2],
+      [3, 4],
+      [5, 0],
+    ],
+  },
+  {
+    name: "Pressure Stair",
+    path: [
+      [0, 0],
+      [0, 1],
+      [0, 2],
+      [1, 2],
+      [2, 2],
+      [2, 3],
+      [2, 4],
+      [3, 4],
+      [4, 4],
+      [5, 4],
+      [5, 5],
+    ],
+    blockers: [
+      [1, 4],
+      [3, 1],
+      [4, 2],
+    ],
+  },
 ];
 
 export class PipeGame {
@@ -113,11 +150,14 @@ export class PipeGame {
   private readonly pressureFill = this.requiredElement("pipe-pressure-fill");
   private readonly pressureText = this.requiredElement("pipe-pressure-text");
   private readonly timeText = this.requiredElement("pipe-time-text");
+  private readonly levelText = this.requiredElement("pipe-level-text");
   private readonly movesText = this.requiredElement("pipe-moves-text");
   private readonly leaksText = this.requiredElement("pipe-leaks-text");
   private readonly progressText = this.requiredElement("pipe-progress-text");
   private readonly feedback = this.requiredElement("pipe-feedback");
   private readonly objective = this.requiredElement("pipe-objective-text");
+  private readonly inletLabel = this.requiredElement("pipe-inlet-label");
+  private readonly outletLabel = this.requiredElement("pipe-outlet-label");
   private readonly overlay = this.requiredElement("pipe-overlay");
   private readonly stateTitle = this.requiredElement("pipe-state-title");
   private readonly stateDetail = this.requiredElement("pipe-state-detail");
@@ -132,6 +172,7 @@ export class PipeGame {
   private pressure = 8;
   private timeLeft = 90;
   private hinted = false;
+  private levelIndex = 0;
   private lastTick = performance.now();
   private rafId = 0;
 
@@ -150,15 +191,7 @@ export class PipeGame {
   }
 
   reset(useInitialRotations = true): void {
-    this.cells = LEVEL_TEMPLATE.map((row, rowIndex) =>
-      row.map((cell, colIndex) => ({
-        ...cell,
-        row: rowIndex,
-        col: colIndex,
-        rotation: useInitialRotations ? cell.rotation : this.scrambledRotation(cell),
-        initialRotation: cell.rotation,
-      })),
-    );
+    this.cells = this.buildLevel(useInitialRotations);
     this.runState = "playing";
     this.moves = 0;
     this.leaks = 0;
@@ -171,11 +204,13 @@ export class PipeGame {
     this.evaluateFlow();
     this.render();
     this.updateHud();
+    this.updatePortLabels();
   }
 
   scramble(): void {
+    this.levelIndex = (this.levelIndex + 1) % PIPE_LEVELS.length;
     this.reset(false);
-    this.feedback.textContent = "Grid scrambled. Corporate denies responsibility.";
+    this.feedback.textContent = "New pipe level loaded. Corporate denies responsibility.";
   }
 
   rotateCell(row: number, col: number): void {
@@ -223,6 +258,10 @@ export class PipeGame {
       timeLeft: this.timeLeft,
       solved: this.isSolved(),
       poweredCount: this.powered.size,
+      levelIndex: this.levelIndex,
+      levelName: PIPE_LEVELS[this.levelIndex]?.name,
+      source: this.pointFor(this.findCell("source")),
+      sink: this.pointFor(this.findCell("sink")),
       rotations: this.cells.map((row) => row.map((cell) => cell.rotation)),
     };
   }
@@ -290,6 +329,46 @@ export class PipeGame {
     }
   }
 
+  private buildLevel(useInitialRotations: boolean): PipeCell[][] {
+    const level = PIPE_LEVELS[this.levelIndex] ?? PIPE_LEVELS[0]!;
+    const sourceKey = this.keyForPoint(level.path[0]!);
+    const sinkKey = this.keyForPoint(level.path[level.path.length - 1]!);
+    const blockerKeys = new Set(level.blockers.map((point) => this.keyForPoint(point)));
+    const pathIndexByKey = new Map(level.path.map((point, index) => [this.keyForPoint(point), index]));
+
+    return Array.from({ length: BOARD_SIZE }, (_, row) =>
+      Array.from({ length: BOARD_SIZE }, (_, col) => {
+        const key = this.keyFor(row, col);
+        const pathIndex = pathIndexByKey.get(key);
+        const base =
+          key === sourceKey
+            ? { type: "source" as PipeType, solutionRotation: 0, locked: true }
+            : key === sinkKey
+              ? { type: "sink" as PipeType, solutionRotation: 0, locked: true }
+              : blockerKeys.has(key)
+                ? { type: "blocked" as PipeType, solutionRotation: 0, locked: true }
+                : pathIndex !== undefined
+                  ? this.pathCellFor(level.path, pathIndex)
+                  : this.decoyCellFor(row, col);
+        const initialRotation = base.locked
+          ? base.solutionRotation
+          : this.initialRotationFor(base.solutionRotation, row, col);
+        const cell = {
+          ...base,
+          row,
+          col,
+          rotation: initialRotation,
+          initialRotation,
+        };
+
+        return {
+          ...cell,
+          rotation: useInitialRotations ? cell.rotation : this.scrambledRotation(cell),
+        };
+      }),
+    );
+  }
+
   private evaluateFlow(): void {
     const source = this.findCell("source");
     const sink = this.findCell("sink");
@@ -352,6 +431,7 @@ export class PipeGame {
     this.pressureFill.style.width = `${Math.round(this.pressure)}%`;
     this.pressureText.textContent = `${Math.round(this.pressure)}%`;
     this.timeText.textContent = this.formatTime(this.timeLeft);
+    this.levelText.textContent = `Level ${this.levelIndex + 1}: ${PIPE_LEVELS[this.levelIndex]?.name ?? "Pipe Shift"}`;
     this.progressText.textContent = this.isSolved()
       ? "Outlet connected. Pipeline secured."
       : `Blue flow reached ${this.powered.size} tile${this.powered.size === 1 ? "" : "s"}.`;
@@ -363,6 +443,11 @@ export class PipeGame {
     this.hinted = !this.hinted;
     this.feedback.textContent = this.hinted ? "Misaligned route pieces are tagged in amber." : "Route hints cleared.";
     this.render();
+  }
+
+  private updatePortLabels(): void {
+    this.positionPortLabel(this.inletLabel, this.findCell("source"), "left");
+    this.positionPortLabel(this.outletLabel, this.findCell("sink"), "right");
   }
 
   private maskFor(cell: PipeCell): number {
@@ -418,7 +503,7 @@ export class PipeGame {
         ? `<span class="pipe-terminal-marker pipe-terminal-${cell.type}" aria-hidden="true"></span>`
         : "";
 
-    return `<span class="pipe-sheet-piece" style="${this.sheetStyleFor(shape, rotation)}" aria-hidden="true"><img class="pipe-sheet-image" src="${pipeSheetUrl()}" style="${this.sheetImageStyleFor(shape)}" alt="" draggable="false" /></span>${terminalMarker}`;
+    return `${this.connectorArtFor(cell)}<span class="pipe-sheet-piece" style="${this.sheetStyleFor(shape, rotation)}" aria-hidden="true"><img class="pipe-sheet-image" src="${pipeSheetUrl()}" style="${this.sheetImageStyleFor(shape)}" alt="" draggable="false" /></span>${terminalMarker}`;
   }
 
   private sheetStyleFor(shape: PipeAssetShape, rotation: number): string {
@@ -444,6 +529,13 @@ export class PipeGame {
       .join("");
   }
 
+  private connectorArtFor(cell: PipeCell): string {
+    const openings = this.maskFor(cell);
+    return DIRS.filter((direction) => (openings & direction.mask) !== 0)
+      .map((direction) => `<span class="pipe-edge-connector pipe-edge-${direction.dir}" aria-hidden="true"></span>`)
+      .join("");
+  }
+
   private assetShapeFor(cell: PipeCell): PipeAssetShape {
     if (cell.type === "source" || cell.type === "sink") return "valve";
     if (cell.type === "straight" || cell.type === "elbow" || cell.type === "tee" || cell.type === "cross") {
@@ -466,9 +558,65 @@ export class PipeGame {
     return `Tap to rotate ${cell.type} pipe at row ${cell.row + 1}, column ${cell.col + 1}. Rotation ${cell.rotation}`;
   }
 
-  private scrambledRotation(cell: Omit<PipeCell, "row" | "col" | "initialRotation">): number {
+  private scrambledRotation(cell: Pick<PipeCell, "locked" | "type" | "rotation" | "solutionRotation">): number {
     if (cell.locked || cell.type === "blocked" || cell.type === "cross") return cell.rotation;
     return (cell.solutionRotation + 1 + Math.floor(Math.random() * 3)) % 4;
+  }
+
+  private pathCellFor(path: PipePathPoint[], index: number): Pick<PipeCell, "type" | "solutionRotation" | "locked"> {
+    const previous = path[index - 1];
+    const current = path[index];
+    const next = path[index + 1];
+    if (!previous || !current || !next) {
+      return { type: "straight", solutionRotation: 0 };
+    }
+
+    return this.cellForDirections([this.directionBetween(current, previous), this.directionBetween(current, next)]);
+  }
+
+  private cellForDirections(directions: Direction[]): Pick<PipeCell, "type" | "solutionRotation" | "locked"> {
+    const mask = directions.reduce<number>((acc, direction) => acc | DIRS[direction]!.mask, 0);
+    switch (mask) {
+      case DirMask.North | DirMask.South:
+        return { type: "straight", solutionRotation: 0 };
+      case DirMask.East | DirMask.West:
+        return { type: "straight", solutionRotation: 1 };
+      case DirMask.North | DirMask.East:
+        return { type: "elbow", solutionRotation: 0 };
+      case DirMask.East | DirMask.South:
+        return { type: "elbow", solutionRotation: 1 };
+      case DirMask.South | DirMask.West:
+        return { type: "elbow", solutionRotation: 2 };
+      case DirMask.West | DirMask.North:
+        return { type: "elbow", solutionRotation: 3 };
+      default:
+        return { type: "tee", solutionRotation: 0 };
+    }
+  }
+
+  private decoyCellFor(row: number, col: number): Pick<PipeCell, "type" | "solutionRotation" | "locked"> {
+    const decoys: Array<Pick<PipeCell, "type" | "solutionRotation" | "locked">> = [
+      { type: "elbow", solutionRotation: 0 },
+      { type: "straight", solutionRotation: 1 },
+      { type: "tee", solutionRotation: 3 },
+      { type: "elbow", solutionRotation: 2 },
+      { type: "straight", solutionRotation: 0 },
+      { type: "tee", solutionRotation: 1 },
+    ];
+    return decoys[(row * 7 + col * 3 + this.levelIndex * 5) % decoys.length]!;
+  }
+
+  private initialRotationFor(solutionRotation: number, row: number, col: number): number {
+    return (solutionRotation + 1 + ((row + col + this.levelIndex) % 3)) % 4;
+  }
+
+  private directionBetween(from: PipePathPoint, to: PipePathPoint): Direction {
+    const [fromRow, fromCol] = from;
+    const [toRow, toCol] = to;
+    if (toRow < fromRow) return 0;
+    if (toCol > fromCol) return 1;
+    if (toRow > fromRow) return 2;
+    return 3;
   }
 
   private findCell(type: "source" | "sink"): PipeCell {
@@ -479,6 +627,26 @@ export class PipeGame {
 
   private keyFor(row: number, col: number): string {
     return `${row}:${col}`;
+  }
+
+  private keyForPoint([row, col]: PipePathPoint): string {
+    return this.keyFor(row, col);
+  }
+
+  private pointFor(cell: PipeCell): PipePathPoint {
+    return [cell.row, cell.col];
+  }
+
+  private positionPortLabel(label: HTMLElement, cell: PipeCell, side: "left" | "right"): void {
+    label.style.top = `calc(${((cell.row + 0.5) / BOARD_SIZE) * 100}% - 14px)`;
+    label.style.bottom = "auto";
+    if (side === "left") {
+      label.style.left = "2px";
+      label.style.right = "auto";
+    } else {
+      label.style.left = "auto";
+      label.style.right = "2px";
+    }
   }
 
   private leakKeyFor(row: number, col: number, direction: Direction): string {

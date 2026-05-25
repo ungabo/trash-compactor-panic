@@ -4,72 +4,68 @@ Last updated: 2026-05-24
 
 ## Role Model
 
-Codex is acting as lead developer and project manager. Sub-agents are used for bounded sidecar work such as asset analysis, QA checklists, and future disjoint implementation slices. The lead keeps the critical path local: architecture, integration, test, deploy, and release notes.
+Codex is acting as lead developer and project manager. Sub-agents are used for bounded sidecar work such as asset analysis, QA checks, and disjoint mini-game ownership. The lead keeps the critical path local: app structure, integration, test, deploy, and release notes.
 
 ## Repository
 
 - Local work folder: `D:\__MY APPS\trash compactor`
 - GitHub repo: `https://github.com/ungabo/trash-compactor-panic`
 - Visibility: public
-- Primary stack: Vite, TypeScript, Phaser 3
+- Primary stack: Vite, TypeScript, Phaser 3 plus DOM-based touch mini-games
 
 ## Deployment
 
 - Remote host details are read from the local desktop SFTP info file.
 - Remote test folder: `/sitesindevelopment/games/Trash Compactor`
-- Public test URL is expected to be `https://sitesindevelopment.com/games/Trash%20Compactor/`.
-- Latest deployed Prototype 1 build passed headless smoke testing at the public URL.
+- Public test URL: `https://sitesindevelopment.com/games/Trash%20Compactor/`
 
-## Prototype 1 Scope
+## Current App Shape
 
-Implemented target:
+The app opens to a root menu with three selectable mini-games.
 
-- One room
-- One character
-- WASD/arrow movement
-- Pickup/drop with `E`
-- Throw with `Space`
-- Recyclables, organics, toxic trash
-- Matching chutes
-- One crate
-- One jam plate
-- Wall pressure
-- Timer
-- Score
-- Win/fail/restart loop
+### Main Chamber
 
-Out of scope for Prototype 1:
+The main visual target is the original concept gameplay image. The game uses that chamber as the playfield and overlays touch/click hotspots for:
 
-- Campaign progression
-- Full four-character cast
-- Sewer creature AI
-- Pipe rerouting puzzles
-- Android touch controls
-- Windows packaging
-- Online co-op
+- collecting crates
+- jamming numbered compactor plates
+- repairing/rerouting broken pipes
+- using Emergency Jam
+- managing pressure and timer failure
+
+### Pipe Lab
+
+A pipe-rotation sub-game using cropped pipe assets from the provided pipe sheet. Players tap/click tiles to rotate them and connect the inlet to the outlet.
+
+### Sorting Sprint
+
+The first playable sorting prototype is preserved as an arcade sub-game with keyboard movement, pickup/drop, throwing, sorting, jam plate, pressure, timer, and restart.
 
 ## Milestone Sequence
 
-1. Prototype 1: core sorting and pressure loop.
-2. Prototype 2: character switching, second character ability, pipe rerouting, clog meter.
-3. Prototype 3: sewer creature, four characters, three levels, results screen.
-4. MVP: 12 levels, settings, save progress, controller/touch pass, web/Windows/Android packaging plan.
+1. Mini-game collection shell: menu, mode switching, shared deploy/test flow.
+2. Main Chamber fidelity: make the concept-art chamber more interactive while staying visually close to the mockup.
+3. Pipe Lab progression: multiple route puzzles, colored pipe routes, locked/broken pipe events.
+4. Sorting Sprint polish: better controls, art pass, and clearer scoring.
+5. Campaign wrapper: sequence the mini-games into levels/chambers with shared pressure and results.
 
 ## Sub-Agent Log
 
 - Asset/visual analyst: inspected reference material and confirmed current PNG sheets are not transparent; recommended treating them as reference/source until an asset cleanup pass.
-- QA/playtest planner: produced Prototype 1 acceptance criteria and browser/headless smoke-test flow.
+- QA/playtest planner: produced initial acceptance criteria and browser/headless smoke-test flow.
+- Pipe Lab owner: converted the pipe puzzle to use cropped pipe PNG assets and verified desktop click/mobile tap behavior.
+- Sorting Sprint owner: scoped Sorting Sprint as a sub-game and gated its updates while inactive.
 
 ## Current Next Actions
 
-- Collect playtest notes against Prototype 1.
-- Improve asset fidelity with cleaned/generated transparent sprites.
-- Start Prototype 2 planning: character switching, pipe rerouting, clog meter.
+- Deploy the three-game menu build.
+- Collect playtest notes on which mini-game should become the campaign core.
+- Improve Main Chamber interactions without drifting from the concept art.
 
 ## Verification Log
 
 - `npm run build`: passed.
 - `npm run smoke`: passed locally against `http://127.0.0.1:4173`.
-- `npm run setup:remote`: created `/sitesindevelopment/games/Trash Compactor`.
-- `npm run deploy`: uploaded `dist/`.
+- `npm run deploy`: uploaded `dist/` to `/sitesindevelopment/games/Trash Compactor`.
 - `SMOKE_URL=https://sitesindevelopment.com/games/Trash%20Compactor/ npm run smoke`: passed against the public deployment.
+- Current smoke covers root menu, Main Chamber, Pipe Lab, Sorting Sprint, desktop viewports, and mobile touch interaction.

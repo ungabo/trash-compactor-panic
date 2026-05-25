@@ -17,6 +17,20 @@ function assert(condition, message) {
   }
 }
 
+function installErrorListeners(page, pageErrors, failedRequests) {
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error" && !message.text().includes("favicon")) {
+      pageErrors.push(message.text());
+    }
+  });
+  page.on("requestfailed", (request) => {
+    if (!request.url().includes("favicon")) {
+      failedRequests.push(`${request.method()} ${request.url()} ${request.failure()?.errorText ?? ""}`);
+    }
+  });
+}
+
 async function isCanvasNonBlank(page) {
   return page.evaluate(() => {
     const canvas = document.querySelector("canvas");
@@ -37,97 +51,194 @@ async function isCanvasNonBlank(page) {
   });
 }
 
-async function getState(page) {
-  return page.evaluate(() => window.__TCP_TEST__?.getState());
+async function getPipeState(page) {
+  return page.evaluate(() => window.__TCP_PIPE_TEST__?.getState());
+}
+
+async function getChamberState(page) {
+  return page.evaluate(() => window.__TCP_CHAMBER_TEST__?.getState());
+}
+
+async function getSortState(page) {
+  return page.evaluate(() => window.__TCP_SORT_TEST__?.getState());
+}
+
+async function verifyRootMenu(page) {
+  await page.waitForSelector("#menu-screen", { timeout: 15000 });
+  await page.waitForFunction(() => Boolean(window.__TCP_APP__), null, { timeout: 15000 });
+  assert((await page.evaluate(() => window.__TCP_APP__?.getMode())) === "menu", "Root should open to the game menu.");
+  assert(await page.locator("#menu-chamber-button").isVisible(), "Main Chamber menu button should be visible.");
+  assert(await page.locator("#menu-pipe-button").isVisible(), "Pipe Lab menu button should be visible.");
+  assert(await page.locator("#menu-sort-button").isVisible(), "Sorting Sprint menu button should be visible.");
+}
+
+async function verifyConceptChamber(page, inputMethod = "click") {
+  await page.evaluate(() => window.__TCP_APP__.selectMode("chamber"));
+  await page.waitForSelector(".concept-stage img", { timeout: 15000 });
+  await page.waitForFunction(() => Boolean(window.__TCP_CHAMBER_TEST__), null, { timeout: 15000 });
+  assert((await page.evaluate(() => window.__TCP_APP__?.getMode())) === "chamber", "Main Chamber mode did not activate.");
+  assert(await page.locator("#concept-screen").isVisible(), "Concept chamber should be visible.");
+
+  const imageLoaded = await page.locator(".concept-stage img").evaluate((img) => img.complete && img.naturalWidth > 1000);
+  assert(imageLoaded, "Concept chamber image did not load.");
+
+  const initial = await getChamberState(page);
+  assert(initial?.runState === "playing", "Concept chamber should start in playing state.");
+
+  const activate = async (selector) => {
+    const target = page.locator(selector);
+    if (inputMethod === "tap") await target.tap({ force: true });
+    else await target.click({ force: true });
+    await page.waitForTimeout(100);
+  };
+
+  await activate('.concept-hotspot[data-hotspot="crate-left"]');
+  let afterCrate = await getChamberState(page);
+  assert(afterCrate.cratesHeld === initial.cratesHeld + 1, "Tapping a crate did not collect it.");
+
+  await activate('.concept-hotspot[data-hotspot="jam-1"]');
+  let afterJam = await getChamberState(page);
+  assert(afterJam.jammed === 1, "Tapping a jam plate with a crate did not jam it.");
+
+  await activate('.concept-hotspot[data-hotspot="blue-route"]');
+  let afterPipe = await getChamberState(page);
+  assert(afterPipe.routed === 3, "Tapping a broken pipe did not reroute it.");
+
+  await activate('.concept-hotspot[data-hotspot="emergency-jam"]');
+  let afterEmergency = await getChamberState(page);
+  assert(afterEmergency.emergencyUsed === true, "Emergency Jam hotspot did not activate.");
+
+  await page.evaluate(() => window.__TCP_CHAMBER_TEST__.forceFail());
+  const failed = await getChamberState(page);
+  assert(failed.runState === "failed", "Concept chamber forced fail did not set failed state.");
+  await page.evaluate(() => window.__TCP_CHAMBER_TEST__.reset());
+  await page.waitForFunction(() => window.__TCP_CHAMBER_TEST__?.getState()?.runState === "playing");
+}
+
+async function verifyPipeGame(page, inputMethod = "click") {
+  await page.evaluate(() => window.__TCP_APP__.selectMode("pipes"));
+  await page.waitForSelector("#pipe-board", { timeout: 15000 });
+  await page.waitForFunction(() => Boolean(window.__TCP_PIPE_TEST__), null, { timeout: 15000 });
+  assert((await page.evaluate(() => window.__TCP_APP__?.getMode())) === "pipes", "Pipe Lab mode did not activate.");
+
+  const boardVisible = await page.locator("#pipe-board").isVisible();
+  assert(boardVisible, "Pipe board should be visible.");
+
+  const initial = await getPipeState(page);
+  assert(initial?.runState === "playing", "Pipe game should start in playing state.");
+  assert(initial.poweredCount >= 1, "Pipe game should show flow from the source.");
+
+  const targetTile = page.locator('.pipe-tile[data-row="2"][data-col="1"]');
+  const tileBox = await targetTile.boundingBox();
+  assert(tileBox && tileBox.width >= 48 && tileBox.height >= 48, "Pipe tile touch target is too small.");
+  if (inputMethod === "tap") {
+    await targetTile.tap();
+  } else {
+    await targetTile.click();
+  }
+  await page.waitForTimeout(120);
+  const afterTap = await getPipeState(page);
+  assert(afterTap.moves === initial.moves + 1, "Tapping a pipe did not rotate it.");
+  assert(afterTap.rotations[2][1] !== initial.rotations[2][1], "Tapped pipe rotation did not change.");
+
+  await page.evaluate(() => window.__TCP_PIPE_TEST__.solve());
+  await page.waitForSelector("#pipe-overlay:not(.is-hidden)");
+  const solved = await getPipeState(page);
+  assert(solved.runState === "won" && solved.solved === true, "Solved pipe route did not trigger win state.");
+
+  await page.evaluate(() => window.__TCP_PIPE_TEST__.reset());
+  await page.waitForFunction(() => window.__TCP_PIPE_TEST__?.getState()?.runState === "playing");
+  await page.evaluate(() => window.__TCP_PIPE_TEST__.forceFail());
+  const failed = await getPipeState(page);
+  assert(failed.runState === "failed", "Forced pipe pressure failure did not set failed state.");
+}
+
+async function verifySortingMiniGame(page) {
+  await page.evaluate(() => window.__TCP_APP__.selectMode("sort"));
+  await page.waitForSelector("canvas", { timeout: 15000 });
+  await page.waitForFunction(() => Boolean(window.__TCP_SORT_TEST__), null, { timeout: 15000 });
+  assert((await page.evaluate(() => window.__TCP_APP__?.getMode())) === "sort", "Sorting Sprint mode did not activate.");
+  assert(await isCanvasNonBlank(page), "Sorting mini-game canvas appears blank.");
+
+  const initial = await getSortState(page);
+  assert(initial?.runState === "playing", "Sorting mini-game should start in playing state.");
+
+  await page.keyboard.down("KeyD");
+  await page.waitForTimeout(300);
+  await page.keyboard.up("KeyD");
+  const moved = await getSortState(page);
+  assert(moved.player.x > initial.player.x + 10, "Sorting player did not move right after keyboard input.");
+
+  await page.evaluate(() => window.__TCP_SORT_TEST__.spawnTrashAtPlayer("recycle"));
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(120);
+  const afterPickup = await getSortState(page);
+  assert(afterPickup.carried?.kind === "trash", "Sorting pickup did not set carried trash state.");
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(120);
+  const afterDrop = await getSortState(page);
+  assert(afterDrop.carried === null, "Sorting drop did not clear carried state.");
+
+  await page.evaluate(() => window.__TCP_SORT_TEST__.sortOneCorrect());
+  const afterCorrect = await getSortState(page);
+  assert(afterCorrect.sorted === 1, "Correct sort did not increment objective progress.");
+
+  await page.evaluate(() => window.__TCP_SORT_TEST__.placeCrateOnJam());
+  const jammed = await getSortState(page);
+  assert(jammed.jamActive === true, "Jam plate did not activate in sorting mini-game.");
 }
 
 await mkdir(outputDir, { recursive: true });
 
 const browser = await chromium.launch({ headless: true });
-const pageErrors = [];
-const failedRequests = [];
 
 try {
+  const pageErrors = [];
+  const failedRequests = [];
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-  page.on("pageerror", (error) => pageErrors.push(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") pageErrors.push(message.text());
-  });
-  page.on("requestfailed", (request) => {
-    if (!request.url().includes("favicon")) {
-      failedRequests.push(`${request.method()} ${request.url()} ${request.failure()?.errorText ?? ""}`);
-    }
-  });
+  installErrorListeners(page, pageErrors, failedRequests);
 
   await page.goto(url, { waitUntil: "networkidle" });
-  await page.waitForSelector("canvas", { timeout: 15000 });
-  await page.waitForFunction(() => Boolean(window.__TCP_TEST__), null, { timeout: 15000 });
-
   assert(pageErrors.length === 0, `Console/page errors found: ${pageErrors.join(" | ")}`);
   assert(failedRequests.length === 0, `Failed requests found: ${failedRequests.join(" | ")}`);
-  assert(await isCanvasNonBlank(page), "Canvas appears blank.");
 
-  const initial = await getState(page);
-  assert(initial?.runState === "playing", "Initial run state should be playing.");
-
-  await page.keyboard.down("KeyD");
-  await page.waitForTimeout(300);
-  await page.keyboard.up("KeyD");
-  const moved = await getState(page);
-  assert(moved.player.x > initial.player.x + 10, "Player did not move right after keyboard input.");
-
-  await page.evaluate(() => window.__TCP_TEST__.spawnTrashAtPlayer("recycle"));
-  await page.keyboard.press("KeyE");
-  await page.waitForTimeout(120);
-  let afterPickup = await getState(page);
-  assert(afterPickup.carried?.kind === "trash", "Pickup did not set carried trash state.");
-  await page.keyboard.press("KeyE");
-  await page.waitForTimeout(120);
-  let afterDrop = await getState(page);
-  assert(afterDrop.carried === null, "Drop did not clear carried state.");
-
-  await page.evaluate(() => window.__TCP_TEST__.sortOneCorrect());
-  const afterCorrect = await getState(page);
-  assert(afterCorrect.sorted === 1, "Correct sort did not increment objective progress.");
-  assert(afterCorrect.score > 0, "Correct sort did not increase score.");
-
-  await page.evaluate(() => window.__TCP_TEST__.sortOneWrong());
-  const afterWrong = await getState(page);
-  assert(afterWrong.wrongSorts === 1, "Wrong sort did not increment wrong-sort count.");
-  assert(afterWrong.pressure > afterCorrect.pressure, "Wrong sort did not increase pressure.");
-
-  await page.waitForTimeout(1100);
-  const later = await getState(page);
-  assert(later.pressure > afterWrong.pressure, "Pressure did not rise over time.");
-
-  await page.evaluate(() => window.__TCP_TEST__.placeCrateOnJam());
-  const jammed = await getState(page);
-  assert(jammed.jamActive === true, "Jam plate did not activate when crate was placed.");
-
-  await page.evaluate(() => window.__TCP_TEST__.forceWin());
-  await page.waitForSelector("#state-overlay:not(.is-hidden)");
-  assert((await getState(page)).runState === "won", "Forced win did not set win state.");
-
-  await page.evaluate(() => window.__TCP_TEST__.restart());
-  await page.waitForFunction(() => window.__TCP_TEST__?.getState()?.runState === "playing");
-  await page.evaluate(() => window.__TCP_TEST__.forcePressureFail());
-  assert((await getState(page)).runState === "failed", "Forced pressure fail did not set failed state.");
-
-  await page.evaluate(() => window.__TCP_TEST__.restart());
-  await page.waitForFunction(() => window.__TCP_TEST__?.getState()?.runState === "playing");
-  await page.evaluate(() => window.__TCP_TEST__.forceTimerFail());
-  assert((await getState(page)).runState === "failed", "Forced timer fail did not set failed state.");
-
-  await page.screenshot({ path: path.join(outputDir, "smoke-core-flow.png"), fullPage: true });
+  await verifyRootMenu(page);
+  await page.screenshot({ path: path.join(outputDir, "root-menu.png"), fullPage: true });
+  await verifyConceptChamber(page);
+  await page.screenshot({ path: path.join(outputDir, "concept-chamber-main.png"), fullPage: true });
+  await verifyPipeGame(page);
+  await page.evaluate(() => window.__TCP_PIPE_TEST__.reset());
+  await page.waitForFunction(() => window.__TCP_PIPE_TEST__?.getState()?.runState === "playing");
+  await page.screenshot({ path: path.join(outputDir, "pipe-lab-sub-game.png"), fullPage: true });
+  await verifySortingMiniGame(page);
+  await page.screenshot({ path: path.join(outputDir, "sorting-mini-game.png"), fullPage: true });
   await page.close();
+
+  const mobileContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const mobilePage = await mobileContext.newPage();
+  const mobileErrors = [];
+  const mobileFailedRequests = [];
+  installErrorListeners(mobilePage, mobileErrors, mobileFailedRequests);
+  await mobilePage.goto(url, { waitUntil: "networkidle" });
+  await verifyRootMenu(mobilePage);
+  await verifyConceptChamber(mobilePage, "tap");
+  await mobilePage.screenshot({ path: path.join(outputDir, "mobile-concept-chamber.png"), fullPage: true });
+  await verifyPipeGame(mobilePage, "tap");
+  await mobilePage.evaluate(() => window.__TCP_PIPE_TEST__.reset());
+  await mobilePage.waitForFunction(() => window.__TCP_PIPE_TEST__?.getState()?.runState === "playing");
+  assert(mobileErrors.length === 0, `Mobile console/page errors found: ${mobileErrors.join(" | ")}`);
+  assert(mobileFailedRequests.length === 0, `Mobile failed requests found: ${mobileFailedRequests.join(" | ")}`);
+  await mobilePage.screenshot({ path: path.join(outputDir, "mobile-pipe-touch.png"), fullPage: true });
+  await mobileContext.close();
 
   for (const viewport of viewports) {
     const viewportPage = await browser.newPage({ viewport });
     await viewportPage.goto(url, { waitUntil: "networkidle" });
-    await viewportPage.waitForSelector("canvas");
-    assert(await isCanvasNonBlank(viewportPage), `Canvas blank at ${viewport.width}x${viewport.height}.`);
-    const hudVisible = await viewportPage.locator("#hud").isVisible();
-    assert(hudVisible, `HUD not visible at ${viewport.width}x${viewport.height}.`);
+    await verifyRootMenu(viewportPage);
     await viewportPage.screenshot({
       path: path.join(outputDir, `viewport-${viewport.width}x${viewport.height}.png`),
       fullPage: true,

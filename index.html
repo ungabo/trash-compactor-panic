@@ -7,61 +7,180 @@
   </head>
   <body>
     <main id="app">
-      <section class="game-shell" aria-label="Trash Compactor Panic prototype">
-        <div id="game-root"></div>
+      <div class="app-frame">
+        <nav id="mode-bar" class="mode-bar is-hidden" aria-label="Game mode">
+          <button id="menu-mode-button" class="mode-button" type="button">Menu</button>
+          <button id="chamber-mode-button" class="mode-button is-active" type="button">Main Chamber</button>
+          <button id="pipe-mode-button" class="mode-button" type="button">Pipe Lab</button>
+          <button id="sort-mode-button" class="mode-button" type="button">Sorting Sprint</button>
+        </nav>
 
-        <div id="hud" class="hud" aria-live="polite">
-          <div class="brand-panel">
-            <div class="brand-title">Trash<br />Compactor<br /><span>Panic</span></div>
-            <p>"Sort it. Jam it. Don't get squished."</p>
+        <section id="menu-screen" class="menu-screen" aria-label="Trash Compactor Panic game menu">
+          <div class="menu-backdrop">
+            <img src="./assets/concept-gameplay.png" alt="" draggable="false" />
           </div>
-
-          <div class="pressure-panel metal-panel">
-            <div class="panel-label">Wall Pressure</div>
-            <div class="pressure-track" role="meter" aria-label="Wall pressure">
-              <div id="pressure-fill" class="pressure-fill"></div>
+          <div class="menu-content">
+            <div class="menu-title">
+              <div class="brand-title menu-logo">Trash Compactor <span>Panic</span></div>
+              <p>Choose a chamber drill</p>
             </div>
-            <div id="pressure-text" class="pressure-text">0%</div>
+            <div class="menu-grid">
+              <button id="menu-chamber-button" class="menu-card" type="button">
+                <span>Main Chamber</span>
+                <small>Repair pipes, grab crates, jam compactor plates.</small>
+              </button>
+              <button id="menu-pipe-button" class="menu-card" type="button">
+                <span>Pipe Lab</span>
+                <small>Rotate provided pipe assets into a complete route.</small>
+              </button>
+              <button id="menu-sort-button" class="menu-card" type="button">
+                <span>Sorting Sprint</span>
+                <small>Arcade trash sorting under wall pressure.</small>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section id="concept-screen" class="concept-screen is-hidden" aria-label="Trash Compactor Panic main chamber">
+          <div class="concept-viewport">
+            <div class="concept-stage">
+              <img src="./assets/concept-gameplay.png" alt="Trash Compactor Panic chamber concept" draggable="false" />
+              <div id="concept-hotspot-layer" class="concept-hotspot-layer"></div>
+
+              <div class="concept-live-panel metal-panel" aria-live="polite">
+                <div class="panel-label">Live Chamber</div>
+                <div>Pressure <b id="concept-pressure">58%</b></div>
+                <div>Time <b id="concept-time">01:24</b></div>
+                <div>Crates <b id="concept-crates">0</b></div>
+                <div>Jam Plates <b id="concept-jammed">0/3</b></div>
+                <div>Pipes <b id="concept-pipes">2/3</b></div>
+                <p id="concept-status">The chamber is live. Repair routes and jam plates before pressure peaks.</p>
+              </div>
+
+              <div id="concept-overlay" class="state-overlay is-hidden">
+                <div class="state-card metal-panel">
+                  <div id="concept-state-title" class="state-title">Chamber Stabilized</div>
+                  <p id="concept-state-detail">Pipes rerouted, plates jammed, and nobody got flattened.</p>
+                  <button id="concept-restart-button" type="button">Restart</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="pipe-screen" class="pipe-screen is-hidden" aria-label="Pipe Lab sub-game">
+          <header class="pipe-header">
+            <div class="pipe-brand">
+              <div class="brand-title compact">Trash Compactor <span>Panic</span></div>
+              <p>Pipeline Panic</p>
+            </div>
+
+            <div class="pipe-pressure metal-panel">
+              <div class="panel-label">Wall Pressure</div>
+              <div class="pressure-track" role="meter" aria-label="Pipeline pressure">
+                <div id="pipe-pressure-fill" class="pressure-fill"></div>
+              </div>
+              <div id="pipe-pressure-text" class="pressure-text">0%</div>
+            </div>
+
+            <div class="pipe-timer metal-panel">
+              <div class="panel-label alert">Time Left</div>
+              <div id="pipe-time-text" class="pipe-time-text">01:30</div>
+            </div>
+          </header>
+
+          <div class="pipe-layout">
+            <aside class="pipe-panel metal-panel">
+              <div class="panel-label">Objectives</div>
+              <p id="pipe-objective-text">Connect the blue inlet to the outlet.</p>
+              <p id="pipe-moves-text" class="muted">Moves 0</p>
+              <p id="pipe-leaks-text" class="muted">Leaks 0</p>
+            </aside>
+
+            <section class="pipe-board-wrap" aria-label="Pipe puzzle board">
+              <div class="pipe-ports">
+                <span class="port-label inlet">Inlet</span>
+                <span class="port-label outlet">Outlet</span>
+              </div>
+              <div id="pipe-board" class="pipe-board"></div>
+              <div id="pipe-feedback" class="pipe-feedback" aria-live="polite">Tap pipe tiles to rotate them.</div>
+            </section>
+
+            <aside class="pipe-panel pipe-controls metal-panel">
+              <div class="panel-label">Control Console</div>
+              <button id="pipe-reset-button" type="button">Reset Grid</button>
+              <button id="pipe-new-button" type="button">New Scramble</button>
+              <button id="pipe-hint-button" type="button">Ping Route</button>
+              <button id="pipe-main-button" type="button">Main Chamber</button>
+            </aside>
           </div>
 
-          <div class="objective-panel metal-panel">
-            <div class="panel-label">Objectives</div>
-            <div id="objective-text" class="objective-line">Sort 0 / 15</div>
-            <div id="jam-state" class="objective-line muted">Jam plate inactive</div>
-            <div id="score-text" class="objective-line score">Score 0</div>
+          <div id="pipe-overlay" class="state-overlay is-hidden">
+            <div class="state-card metal-panel">
+              <div id="pipe-state-title" class="state-title">Pipeline Secured</div>
+              <p id="pipe-state-detail">Flow restored before corporate noticed.</p>
+              <button id="pipe-restart-button" type="button">Play Again</button>
+            </div>
           </div>
+        </section>
 
-          <div class="timer-panel metal-panel">
-            <div class="panel-label alert">Time Left</div>
-            <div id="time-text" class="timer-text">01:45</div>
-          </div>
+        <section id="sort-screen" class="sort-screen is-hidden" aria-label="Sorting Sprint mini-game">
+          <section class="game-shell" aria-label="Sorting Sprint mini-game">
+            <div id="game-root"></div>
 
-          <div class="how-panel metal-panel">
-            <div class="panel-label">How To Survive</div>
-            <p><b>WASD</b> move</p>
-            <p><b>E</b> pickup / drop</p>
-            <p><b>Space</b> throw carried item</p>
-            <p><b>R</b> restart after win/fail</p>
-          </div>
+            <div id="hud" class="hud" aria-live="polite">
+              <div class="brand-panel">
+                <div class="brand-title">Trash<br />Compactor<br /><span>Panic</span></div>
+                <p>"Sort it. Jam it. Don't get squished."</p>
+              </div>
 
-          <div class="status-panel metal-panel">
-            <div id="status-text">Bucket is ready.</div>
-            <div id="carried-text" class="muted">Hands free</div>
-          </div>
+              <div class="pressure-panel metal-panel">
+                <div class="panel-label">Wall Pressure</div>
+                <div class="pressure-track" role="meter" aria-label="Wall pressure">
+                  <div id="pressure-fill" class="pressure-fill"></div>
+                </div>
+                <div id="pressure-text" class="pressure-text">0%</div>
+              </div>
 
-          <div id="feedback-log" class="feedback-log" aria-live="assertive"></div>
-        </div>
+              <div class="objective-panel metal-panel">
+                <div class="panel-label">Objectives</div>
+                <div id="objective-text" class="objective-line">Sort 0 / 15</div>
+                <div id="jam-state" class="objective-line muted">Jam plate inactive</div>
+                <div id="score-text" class="objective-line score">Score 0</div>
+              </div>
 
-        <div id="state-overlay" class="state-overlay is-hidden">
-          <div class="state-card metal-panel">
-            <div id="state-title" class="state-title">Level Complete</div>
-            <p id="state-detail">Corporate appreciates your temporary usefulness.</p>
-            <button id="restart-button" type="button">Restart</button>
-          </div>
-        </div>
-      </section>
+              <div class="timer-panel metal-panel">
+                <div class="panel-label alert">Time Left</div>
+                <div id="time-text" class="timer-text">01:45</div>
+              </div>
+
+              <div class="how-panel metal-panel">
+                <div class="panel-label">How To Survive</div>
+                <p><b>WASD</b> move</p>
+                <p><b>E</b> pickup / drop</p>
+                <p><b>Space</b> throw carried item</p>
+                <p><b>R</b> restart after win/fail</p>
+              </div>
+
+              <div class="status-panel metal-panel">
+                <div id="status-text">Bucket is ready.</div>
+                <div id="carried-text" class="muted">Hands free</div>
+              </div>
+
+              <div id="feedback-log" class="feedback-log" aria-live="assertive"></div>
+            </div>
+
+            <div id="state-overlay" class="state-overlay is-hidden">
+              <div class="state-card metal-panel">
+                <div id="state-title" class="state-title">Level Complete</div>
+                <p id="state-detail">Corporate appreciates your temporary usefulness.</p>
+                <button id="restart-button" type="button">Restart</button>
+              </div>
+            </div>
+          </section>
+        </section>
+      </div>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
-

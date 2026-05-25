@@ -58,6 +58,15 @@ export class MainScene extends Phaser.Scene {
   private runState: RunState = "playing";
   private lastMove = new Phaser.Math.Vector2(0, -1);
   private feedbackExpiresAt = 0;
+  private sortScreen?: HTMLElement | null;
+  private readonly handlePickupDropKey = () => this.handlePickupDrop();
+  private readonly handleThrowKey = () => this.throwCarried();
+  private readonly handleRestartKey = () => {
+    if (this.isSortActive()) {
+      this.restartLevel();
+    }
+  };
+  private readonly handleRestartClick = () => this.restartLevel();
 
   constructor() {
     super("MainScene");
@@ -79,6 +88,8 @@ export class MainScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.sortScreen = document.getElementById("sort-screen");
+    this.applySubGameCopy();
     this.createWorld();
     this.createInput();
     this.createObjects();
@@ -90,10 +101,11 @@ export class MainScene extends Phaser.Scene {
       loop: true,
     });
 
-    this.input.keyboard?.on("keydown-E", () => this.handlePickupDrop());
-    this.input.keyboard?.on("keyup-SPACE", () => this.throwCarried());
-    this.input.keyboard?.on("keydown-R", () => this.restartLevel());
-    document.getElementById("restart-button")?.addEventListener("click", () => this.restartLevel());
+    this.input.keyboard?.on("keydown-E", this.handlePickupDropKey);
+    this.input.keyboard?.on("keyup-SPACE", this.handleThrowKey);
+    this.input.keyboard?.on("keydown-R", this.handleRestartKey);
+    document.getElementById("restart-button")?.addEventListener("click", this.handleRestartClick);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.removeInputListeners());
 
     this.spawnRandomTrash("recycle");
     this.spawnRandomTrash("organic");
@@ -102,6 +114,10 @@ export class MainScene extends Phaser.Scene {
   }
 
   update(_: number, deltaMs: number): void {
+    if (!this.isSortActive()) {
+      return;
+    }
+
     const dt = deltaMs / 1000;
     if (this.runState !== "playing") {
       return;
@@ -296,7 +312,7 @@ export class MainScene extends Phaser.Scene {
   }
 
   private handlePickupDrop(): void {
-    if (this.runState !== "playing") {
+    if (!this.isSortActive() || this.runState !== "playing") {
       return;
     }
 
@@ -348,7 +364,7 @@ export class MainScene extends Phaser.Scene {
   }
 
   private throwCarried(): void {
-    if (this.runState !== "playing" || !this.carried) {
+    if (!this.isSortActive() || this.runState !== "playing" || !this.carried) {
       return;
     }
 
@@ -387,14 +403,14 @@ export class MainScene extends Phaser.Scene {
 
       this.removeCarryable(item);
       if (this.sorted >= PROTOTYPE_LEVEL.targetSorts) {
-        this.endLevel("won", "Level Complete", "15 items sorted before the walls made their point.");
+        this.endLevel("won", "Sprint Complete", "15 items sorted before the walls made their point.");
         return;
       }
     }
   }
 
   private spawnRandomTrash(forcedCategory?: TrashCategory): void {
-    if (this.runState !== "playing") {
+    if (!this.isSortActive() || this.runState !== "playing") {
       return;
     }
 
@@ -529,8 +545,30 @@ export class MainScene extends Phaser.Scene {
     return `${String(minutes).padStart(2, "0")}:${String(remaining).padStart(2, "0")}`;
   }
 
+  private isSortActive(): boolean {
+    this.sortScreen ??= document.getElementById("sort-screen");
+    return !this.sortScreen || !this.sortScreen.classList.contains("is-hidden");
+  }
+
+  private applySubGameCopy(): void {
+    const brandTitle = this.sortScreen?.querySelector<HTMLElement>(".brand-title");
+    const brandTagline = this.sortScreen?.querySelector<HTMLElement>(".brand-panel p");
+
+    brandTitle?.replaceChildren("Sorting", document.createElement("br"), "Sprint");
+    if (brandTagline) {
+      brandTagline.textContent = "Trash Compactor Panic sub-game";
+    }
+  }
+
+  private removeInputListeners(): void {
+    this.input.keyboard?.off("keydown-E", this.handlePickupDropKey);
+    this.input.keyboard?.off("keyup-SPACE", this.handleThrowKey);
+    this.input.keyboard?.off("keydown-R", this.handleRestartKey);
+    document.getElementById("restart-button")?.removeEventListener("click", this.handleRestartClick);
+  }
+
   private createTestHooks(): void {
-    window.__TCP_TEST__ = {
+    window.__TCP_SORT_TEST__ = {
       getState: () => ({
         runState: this.runState,
         pressure: this.pressure,

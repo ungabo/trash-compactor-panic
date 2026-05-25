@@ -14,7 +14,19 @@ The four PNGs are RGB images with no alpha channel. The checkerboard backgrounds
 
 ## Prototype 1 Strategy
 
-Prototype 1 uses clean temporary SVG assets that match the visual language:
+The app now uses the original gameplay concept image directly for the Main Chamber playfield:
+
+- `public/assets/concept-gameplay.png`
+
+Pipe Lab uses cropped pipe tiles from the provided pipe sheet:
+
+- `public/assets/extracted/pipe-blue-straight.png`
+- `public/assets/extracted/pipe-blue-elbow.png`
+- `public/assets/extracted/pipe-blue-tee.png`
+- `public/assets/extracted/pipe-blue-cross.png`
+- `public/assets/extracted/pipe-blue-valve.png`
+
+Sorting Sprint still uses clean temporary SVG assets that match the visual language:
 
 - charcoal industrial floor plates
 - hazard yellow jam plate
@@ -35,4 +47,3 @@ The reference sheets should be revisited in an asset pass to either:
 - Recycle: `#1c9be8`
 - Organic: `#7fcb2e`
 - Toxic: `#a34deb`
-

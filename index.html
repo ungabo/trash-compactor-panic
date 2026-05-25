@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trash Compactor Panic</title>
+  </head>
+  <body>
+    <main id="app">
+      <section class="game-shell" aria-label="Trash Compactor Panic prototype">
+        <div id="game-root"></div>
+
+        <div id="hud" class="hud" aria-live="polite">
+          <div class="brand-panel">
+            <div class="brand-title">Trash<br />Compactor<br /><span>Panic</span></div>
+            <p>"Sort it. Jam it. Don't get squished."</p>
+          </div>
+
+          <div class="pressure-panel metal-panel">
+            <div class="panel-label">Wall Pressure</div>
+            <div class="pressure-track" role="meter" aria-label="Wall pressure">
+              <div id="pressure-fill" class="pressure-fill"></div>
+            </div>
+            <div id="pressure-text" class="pressure-text">0%</div>
+          </div>
+
+          <div class="objective-panel metal-panel">
+            <div class="panel-label">Objectives</div>
+            <div id="objective-text" class="objective-line">Sort 0 / 15</div>
+            <div id="jam-state" class="objective-line muted">Jam plate inactive</div>
+            <div id="score-text" class="objective-line score">Score 0</div>
+          </div>
+
+          <div class="timer-panel metal-panel">
+            <div class="panel-label alert">Time Left</div>
+            <div id="time-text" class="timer-text">01:45</div>
+          </div>
+
+          <div class="how-panel metal-panel">
+            <div class="panel-label">How To Survive</div>
+            <p><b>WASD</b> move</p>
+            <p><b>E</b> pickup / drop</p>
+            <p><b>Space</b> throw carried item</p>
+            <p><b>R</b> restart after win/fail</p>
+          </div>
+
+          <div class="status-panel metal-panel">
+            <div id="status-text">Bucket is ready.</div>
+            <div id="carried-text" class="muted">Hands free</div>
+          </div>
+
+          <div id="feedback-log" class="feedback-log" aria-live="assertive"></div>
+        </div>
+
+        <div id="state-overlay" class="state-overlay is-hidden">
+          <div class="state-card metal-panel">
+            <div id="state-title" class="state-title">Level Complete</div>
+            <p id="state-detail">Corporate appreciates your temporary usefulness.</p>
+            <button id="restart-button" type="button">Restart</button>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+

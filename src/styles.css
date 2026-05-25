@@ -1,0 +1,290 @@
+:root {
+  color: #f6ead0;
+  font-family:
+    "Arial Black",
+    "Impact",
+    system-ui,
+    sans-serif;
+  background: #050505;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  min-width: 320px;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(116, 142, 49, 0.18), transparent 38%),
+    linear-gradient(135deg, #050505 0%, #17130e 48%, #080808 100%);
+}
+
+.game-shell {
+  position: relative;
+  width: min(100vw, 177.78vh);
+  aspect-ratio: 16 / 9;
+  max-width: 1920px;
+  background: #0d0d0b;
+  overflow: hidden;
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.65);
+}
+
+#game-root,
+#game-root canvas,
+.hud,
+.state-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+#game-root canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.hud {
+  pointer-events: none;
+}
+
+.metal-panel {
+  background:
+    linear-gradient(180deg, rgba(36, 38, 35, 0.94), rgba(10, 11, 10, 0.96)),
+    #111;
+  border: 2px solid #474038;
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.55),
+    0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+.brand-panel {
+  position: absolute;
+  left: 1.2%;
+  top: 2.2%;
+  width: 13.8%;
+  color: #e6e0ca;
+  text-shadow: 0 3px 0 #000;
+}
+
+.brand-title {
+  font-family: Impact, "Arial Black", sans-serif;
+  font-size: clamp(19px, 3.8vw, 74px);
+  line-height: 0.82;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: #b5dc4a;
+}
+
+.brand-title span {
+  color: #d64727;
+}
+
+.brand-panel p {
+  width: 100%;
+  margin: 4% 0 0;
+  padding: 6% 7%;
+  background: rgba(10, 10, 9, 0.86);
+  border: 2px solid #4a3d25;
+  border-radius: 6px;
+  font-family: "Arial Narrow", Arial, sans-serif;
+  font-size: clamp(9px, 0.8vw, 16px);
+  line-height: 1.2;
+  color: #f4d58b;
+}
+
+.panel-label {
+  margin-bottom: 0.45rem;
+  color: #f0b22a;
+  font-size: clamp(10px, 0.9vw, 17px);
+  text-transform: uppercase;
+}
+
+.panel-label.alert {
+  color: #ff6b55;
+}
+
+.pressure-panel {
+  position: absolute;
+  left: 31%;
+  top: 1.6%;
+  width: 38%;
+  height: 10.2%;
+  padding: 0.65% 1.1%;
+  text-align: center;
+}
+
+.pressure-track {
+  position: relative;
+  width: 100%;
+  height: 32%;
+  overflow: hidden;
+  background: #090908;
+  border: 2px solid #2b2925;
+  border-radius: 4px;
+}
+
+.pressure-track::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 4.6%,
+    rgba(0, 0, 0, 0.55) 4.6% 5.2%
+  );
+}
+
+.pressure-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #63c832 0%, #e4cf2a 52%, #f36b20 76%, #c81716 100%);
+  transition: width 120ms linear;
+}
+
+.pressure-text {
+  margin-top: 0.25rem;
+  color: #f4d58b;
+  font-size: clamp(10px, 0.85vw, 16px);
+}
+
+.objective-panel {
+  position: absolute;
+  right: 1.1%;
+  top: 3%;
+  width: 19%;
+  min-height: 15%;
+  padding: 1.05% 1.15%;
+}
+
+.timer-panel {
+  position: absolute;
+  right: 1.1%;
+  top: 22.2%;
+  width: 19%;
+  padding: 1% 1.2%;
+  text-align: center;
+}
+
+.timer-text {
+  color: #e85542;
+  font-family: Impact, "Arial Black", sans-serif;
+  font-size: clamp(32px, 4.6vw, 92px);
+  line-height: 0.95;
+  text-shadow: 0 0 16px rgba(224, 64, 44, 0.65);
+}
+
+.how-panel {
+  position: absolute;
+  left: 1.2%;
+  bottom: 6%;
+  width: 15.5%;
+  padding: 1% 1.1%;
+}
+
+.how-panel p,
+.objective-line,
+.status-panel,
+.feedback-log {
+  font-family: "Arial Narrow", Arial, sans-serif;
+  font-size: clamp(9px, 0.9vw, 17px);
+  line-height: 1.25;
+}
+
+.how-panel p {
+  margin: 0.55rem 0;
+}
+
+.objective-line {
+  margin: 0.48rem 0;
+  color: #f6ead0;
+}
+
+.score {
+  color: #9fd8ff;
+}
+
+.muted {
+  color: #b7ad98;
+}
+
+.status-panel {
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  bottom: 2%;
+  min-height: 6%;
+  padding: 0.7% 1%;
+  text-align: center;
+}
+
+.feedback-log {
+  position: absolute;
+  left: 36%;
+  top: 13.2%;
+  width: 28%;
+  min-height: 4%;
+  color: #f0b22a;
+  text-align: center;
+  text-shadow: 0 2px 0 #000;
+}
+
+.state-overlay {
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.58);
+  pointer-events: auto;
+}
+
+.state-overlay.is-hidden {
+  display: none;
+}
+
+.state-card {
+  width: min(420px, 38vw);
+  padding: 2rem;
+  text-align: center;
+}
+
+.state-title {
+  color: #f0b22a;
+  font-size: clamp(26px, 3.2vw, 54px);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.state-card p {
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.state-card button {
+  min-width: 128px;
+  min-height: 44px;
+  border: 2px solid #f0b22a;
+  border-radius: 6px;
+  background: #2b1813;
+  color: #f6ead0;
+  font: 800 15px Arial, sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+@media (max-aspect-ratio: 16 / 9) {
+  .brand-title {
+    font-size: clamp(16px, 6vh, 58px);
+  }
+}
+

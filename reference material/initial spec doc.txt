@@ -1,0 +1,1984 @@
+# Trash Compactor Panic — Game Scope Document
+
+## 1. Working Title
+
+**Trash Compactor Panic**
+
+## 2. Core Pitch
+
+**Trash Compactor Panic** is a fast, funny, cooperative puzzle-action game where players are trapped inside a malfunctioning galactic garbage-processing chamber. The compactor walls are closing in, junk is flooding the room, pipes are clogging, trash categories must be sorted, and a ridiculous sewer creature keeps trying to eat the wrong things.
+
+The player must survive each timed level by sorting junk, jamming the crusher, rerouting pipes, managing pressure, avoiding hazards, and coordinating character abilities before the room collapses.
+
+The game should feel like a chaotic mix of:
+
+* **Overcooked-style co-op chaos**
+* **Bomberman-style top-down readability**
+* **Light puzzle routing**
+* **Timed arcade pressure**
+* **Cartoon sci-fi parody humor**
+
+The game should initially be built for **web** so gameplay timing, balance, screen layout, and content can be tuned quickly. The architecture should support later deployment to **Windows desktop** and **Android** without rebuilding core logic.
+
+---
+
+## 3. Target Platforms
+
+### 3.1 Initial Platform
+
+**Web browser first.**
+
+Primary goals for the web build:
+
+* Fast iteration
+* Easy playtesting
+* Tunable mechanics
+* Keyboard controls first
+* Responsive layouts
+* Quick content updates
+* Shareable prototype links
+
+Recommended web target:
+
+* Desktop browser first
+* Later mobile browser support optional
+* WebGL/canvas-based rendering preferred
+
+### 3.2 Secondary Platforms
+
+#### Windows
+
+Windows should be treated as a packaged version of the mature web game unless a native engine is selected.
+
+Possible approaches:
+
+* **Godot export to Windows/Web/Android**
+* **Unity export to WebGL/Windows/Android**
+* **HTML5 game wrapped with Electron/Tauri for Windows**
+* **Phaser/PixiJS web build wrapped later for desktop/mobile**
+
+If the game starts in pure web tech, the desktop version should avoid depending on browser-only hacks that do not work reliably in wrappers.
+
+#### Android
+
+Android requires the most careful UI and control design because touch input, aspect ratio, screen size, and performance constraints differ heavily from desktop.
+
+Android version should support:
+
+* Touch controls
+* Responsive HUD
+* Pause/resume behavior
+* Battery/performance considerations
+* Larger tap targets
+* Portrait or landscape decision early
+
+Recommended initial Android orientation:
+
+**Landscape only.**
+
+Reason: the gameplay field, co-op-style movement, HUD, and pressure indicators fit much better in landscape. Portrait would require a fundamentally different layout and likely harm gameplay readability.
+
+---
+
+## 4. Genre and Player Experience
+
+### 4.1 Genre
+
+* Top-down / isometric puzzle-action arcade game
+* Timed level-based progression
+* Single-player with AI helpers or character switching
+* Optional local co-op or online co-op as an expansion
+
+### 4.2 Player Fantasy
+
+The player is part of a bizarre cleanup/survival crew stuck inside a trash compactor. The fantasy is not heroic in a traditional sense. It is frantic, physical, and absurd:
+
+* Sort garbage under pressure
+* Throw junk into the right pipes
+* Keep the crusher from closing
+* Patch broken systems
+* Keep a sewer monster from getting fed
+* Yell internally while everything goes wrong
+
+### 4.3 Tone
+
+The tone should be funny, colorful, and chaotic, not dark or realistic.
+
+Humor style:
+
+* Workplace disaster comedy
+* Sci-fi bureaucracy
+* Trash-related absurdity
+* Character-specific banter
+* Fake safety warnings
+* Overly formal instructions for ridiculous situations
+
+Examples:
+
+* “Do not feed the sewer thing.”
+* “Organic waste goes in the green pipe. Screaming waste goes nowhere.”
+* “Crusher pressure above 90% voids your employee survival warranty.”
+* “Corporate thanks you for your temporary usefulness.”
+
+---
+
+## 5. Core Gameplay Loop
+
+Each level follows a repeatable loop:
+
+1. The level begins with a trash chamber layout.
+2. Junk starts spawning from chutes, conveyors, or sludge pools.
+3. The player identifies junk type and moves it to the correct destination.
+4. The compactor walls slowly increase pressure.
+5. The player uses crates, buttons, levers, pipes, and character abilities to delay or reduce pressure.
+6. Hazards escalate: slime spills, pipe overloads, blocked routes, monster attacks, electrical surges.
+7. The player completes the required objectives before the timer expires or pressure reaches failure.
+8. The level ends with a grade based on speed, mistakes, damage, pressure control, and rescued valuables.
+
+### 5.1 Moment-to-Moment Actions
+
+The player should constantly make simple decisions:
+
+* Pick up junk
+* Throw junk
+* Sort junk into the correct chute/pipe
+* Push or pull crates
+* Stand on pressure plates
+* Activate switches
+* Repair broken panels
+* Reroute pipe valves
+* Avoid slime, crushing walls, laser hazards, or monster tentacles
+* Use character abilities
+* Decide whether to solve objectives or clean up extra mess for score
+
+The actions should be simple. The complexity should come from time pressure, layout, hazards, and overlapping objectives.
+
+---
+
+## 6. Main Game Modes
+
+### 6.1 Campaign Mode
+
+A structured progression of levels across different garbage-processing chambers.
+
+Campaign should introduce mechanics gradually:
+
+1. Basic movement and pickup/throw
+2. Sorting trash types
+3. Wall pressure
+4. Jam plates
+5. Pipes and valves
+6. Character abilities
+7. Sewer monster
+8. Multi-room levels
+9. Hazard combinations
+10. Boss-style compactor events
+
+Campaign progression unlocks:
+
+* New characters
+* New chambers
+* New trash types
+* New hazards
+* New tools
+* Cosmetic room themes
+* Higher difficulty variants
+
+### 6.2 Arcade Mode
+
+A quick-play mode where the player survives increasingly difficult waves of trash and compactor pressure.
+
+Arcade goals:
+
+* High score chasing
+* Endless or semi-endless mode
+* Good for web demo
+* Lower content requirements than full campaign
+
+### 6.3 Challenge Mode
+
+Short handcrafted levels built around one mechanic.
+
+Examples:
+
+* Sort 30 items with no mistakes
+* Survive 2 minutes without jamming the compactor
+* Reroute all pipes while avoiding slime
+* Keep the sewer monster unfed
+* Complete level using only one character
+
+### 6.4 Co-op Mode
+
+Co-op can be implemented later, but the game design should account for it early.
+
+Possible co-op forms:
+
+* Local same-keyboard co-op on web/Windows
+* Local controller co-op on Windows
+* Online co-op later
+* Android local co-op is lower priority due to screen/input limitations
+
+For first build, implement:
+
+* Single-player with character switching
+* Optional AI helper behavior later
+
+---
+
+## 7. Player Characters
+
+The game should use a small cast of distinct, readable characters. Each has a clear silhouette, role, ability, and personality.
+
+### 7.1 P1 Bucket — Grab & Toss Specialist
+
+**Role:** Fast trash mover.
+
+Visual identity:
+
+* Raccoon-like or masked alien scavenger
+* Small, quick, energetic
+* Tool belt, gloves, maybe a bucket helmet or trash-picker tool
+
+Core ability:
+
+* Can pick up and throw junk farther than others
+* Throws in an arc
+* Can toss light crates over hazards
+
+Gameplay use:
+
+* Fast sorting
+* Emergency disposal
+* Tossing items to teammates
+* Feeding or distracting the monster with decoy junk
+
+Weakness:
+
+* Poor at repairing machinery
+* Cannot move heavy objects alone
+
+### 7.2 P2 Zappa — Power Surge Specialist
+
+**Role:** Electrical control and short-range stun.
+
+Visual identity:
+
+* Green alien with antennae or glowing fingertips
+* Slightly chaotic personality
+* Purple electric effects
+
+Core ability:
+
+* Sends a power surge into panels, doors, and broken machinery
+* Can temporarily stun the sewer creature or disable a hazard
+
+Gameplay use:
+
+* Activate dead panels
+* Repair overloaded power nodes
+* Stop crusher movement briefly
+* Open electrified gates
+
+Weakness:
+
+* Slower movement
+* Can overload systems if used repeatedly without cooldown
+
+### 7.3 P3 Glitch — Hacker / Routing Specialist
+
+**Role:** Pipe rerouting and system hacking.
+
+Visual identity:
+
+* Small robot with screen face
+* Nervous, literal, and overly helpful
+
+Core ability:
+
+* Hacks consoles
+* Changes pipe routing
+* Opens locked gates
+* Reveals hidden trash labels or hazard warnings
+
+Gameplay use:
+
+* Solve routing puzzles
+* Control conveyors
+* Redirect trash streams
+* View mini-map details
+
+Weakness:
+
+* Weak physical strength
+* Cannot throw heavy junk far
+* Vulnerable while hacking
+
+### 7.4 P4 M.O.B. — Pipe Butler / Heavy Utility
+
+**Role:** Heavy lifter and pipe manager.
+
+Visual identity:
+
+* Blob-like or bulky maintenance servant
+* Formal bow tie or vest
+* Polite and strangely dignified
+
+Core ability:
+
+* Pushes heavy crates
+* Carries large junk items
+* Turns heavy valves faster
+* Can block slime flow temporarily
+
+Gameplay use:
+
+* Jam plates
+* Heavy item transport
+* Pipe maintenance
+* Emergency path clearing
+
+Weakness:
+
+* Slow movement
+* Poor at precise tasks
+
+---
+
+## 8. Control Schemes
+
+Controls must be planned separately for web/keyboard, Windows/controller, and Android/touch.
+
+### 8.1 Web Keyboard Controls
+
+Default single-player controls:
+
+* Move: WASD or arrow keys
+* Pick up / drop: Space or E
+* Throw: Hold and release Space or mouse button
+* Interact: E
+* Character switch: Tab or number keys 1–4
+* Ability: Q or right mouse button
+* Dash: Shift
+* Pause: Esc
+
+Alternative:
+
+* Mouse click-to-move could be considered later but should not be required.
+
+### 8.2 Windows Controller Controls
+
+Recommended controller mapping:
+
+* Move: Left stick
+* Aim throw: Right stick or movement direction
+* Pick up / drop: A
+* Throw: Hold/release A or right trigger
+* Interact: X
+* Ability: B or left trigger
+* Character switch: Shoulder buttons
+* Dash: Right bumper
+* Pause: Menu button
+
+### 8.3 Android Touch Controls
+
+Recommended Android layout:
+
+* Landscape orientation
+* Virtual joystick bottom-left
+* Context action button bottom-right
+* Ability button near action button
+* Character switch buttons along bottom or side
+* Throw direction via drag-and-release from action button
+* Pause/settings top-right
+
+Touch design requirements:
+
+* Tap targets at least 48 dp
+* Avoid critical buttons near Android gesture/navigation zones
+* Allow repositioning controls if possible
+* Keep important gameplay area unobstructed
+* HUD must scale down intelligently
+
+### 8.4 Cross-Platform Input Architecture
+
+The game should use an input abstraction layer.
+
+Core actions should be named abstractly:
+
+* Move
+* PickUp
+* Drop
+* ThrowStart
+* ThrowRelease
+* Interact
+* Ability
+* SwitchCharacterNext
+* SwitchCharacterPrevious
+* Pause
+
+Do not hard-code gameplay logic directly to keyboard keys or touch buttons.
+
+---
+
+## 9. Camera and Perspective
+
+### 9.1 Recommended Perspective
+
+Use a **top-down angled/isometric-style camera**.
+
+Benefits:
+
+* Shows room layout clearly
+* Supports four-direction movement
+* Works well for puzzle-action gameplay
+* Makes compactors, pipes, crates, and hazards readable
+* Scales better across platforms than full 3D camera control
+
+### 9.2 Camera Behavior
+
+For single-player:
+
+* Camera follows the active character
+* Slight smoothing
+* Keep objective-critical areas visible where possible
+* Zoom out during emergency events
+* Do not rotate camera during normal gameplay
+
+For co-op:
+
+* Camera may frame all active players if local co-op
+* If players separate too far, either limit separation or zoom out
+
+### 9.3 Level Framing
+
+Levels should be designed to fit within common screen ratios:
+
+* 16:9 desktop
+* 16:10 laptop
+* 21:9 ultrawide
+* 4:3 fallback/tablet-ish layouts
+* Android landscape ratios from roughly 16:9 to 20:9
+
+Avoid placing critical UI or gameplay objects only at extreme edges.
+
+---
+
+## 10. Screen Ratio and Platform Layout Strategy
+
+This is important. The game should not be designed only for one fixed screenshot layout.
+
+### 10.1 Safe Gameplay Area
+
+Define a central **safe gameplay area** where core action occurs.
+
+* Must remain visible on all supported ratios
+* Should not be covered by HUD
+* Level geometry should avoid critical mechanics at the farthest screen edges
+
+### 10.2 HUD Zones
+
+Recommended HUD zones:
+
+#### Desktop / Web 16:9
+
+* Top: pressure meter, timer, level status
+* Left: character list / objectives compact panel
+* Right: active objectives / warnings / mini-map
+* Bottom: inventory, ability bar, interaction prompts
+
+#### Desktop Ultrawide
+
+* Keep gameplay centered
+* Side panels can expand outward
+* Do not stretch the gameplay camera too far horizontally if it exposes unfinished level edges
+* Optional decorative background or extended UI panels can fill side space
+
+#### Laptop 16:10
+
+* Similar to 16:9
+* Bottom HUD may need to be shorter
+* Keep buttons compact
+
+#### Android Landscape
+
+* Top: pressure/timer compact bar
+* Bottom-left: joystick
+* Bottom-right: action buttons
+* Character switch buttons should be compact icons
+* Objectives should collapse into expandable panel
+* Mini-map should be optional/collapsible
+
+### 10.3 Responsive UI Rules
+
+The UI should have breakpoints:
+
+#### Large Desktop
+
+* Full HUD visible
+* Objective list expanded
+* Tooltips and text descriptions available
+
+#### Small Desktop / Tablet Landscape
+
+* Compact panels
+* Smaller objective descriptions
+* Icons plus short labels
+
+#### Android Landscape
+
+* Essential UI only
+* Hide long text during gameplay
+* Use icon-first design
+* Show details only when paused or when a panel is opened
+
+### 10.4 Text Scaling
+
+Text must remain legible:
+
+* Minimum body/UI text on desktop: ~14 px equivalent
+* Minimum touch UI text: ~16 dp equivalent
+* Avoid tiny labels on Android
+* Use icons and color coding where possible
+
+### 10.5 Aspect Ratio Testing Requirements
+
+Developer should test at minimum:
+
+* 1920×1080
+* 1366×768
+* 1440×900
+* 2560×1440
+* 3440×1440
+* 1280×720
+* 2340×1080 Android landscape
+* 2400×1080 Android landscape
+* 2560×1600 tablet landscape
+
+---
+
+## 11. Main Resources and Meters
+
+### 11.1 Wall Pressure
+
+Wall pressure is the primary failure meter.
+
+Behavior:
+
+* Starts low
+* Increases over time
+* Increases faster when trash piles up
+* Increases when pipes clog
+* Decreases or pauses when compactor is jammed
+* Critical zone causes alarms, screen shake, and faster hazard events
+
+Suggested states:
+
+* 0–50%: Safe
+* 51–75%: Warning
+* 76–90%: Danger
+* 91–99%: Critical
+* 100%: Failure unless emergency save active
+
+### 11.2 Time Left
+
+Some levels have a fixed timer.
+
+Timer roles:
+
+* Complete objective before time runs out
+* Survive until extraction
+* Hold pressure below threshold for a duration
+
+### 11.3 Junk Overflow
+
+Each chute or pipe can have an overflow meter.
+
+Overflow consequences:
+
+* Wrong junk causes clogs
+* Clogs increase wall pressure
+* Full chute spills junk back into room
+* Toxic overflow creates hazard tiles
+
+### 11.4 Character Health / Stamina
+
+Avoid complex health early. Better initial system:
+
+* Characters get stunned briefly by hazards
+* No permanent death in early levels
+* Stunned characters drop carried item
+* Severe mistakes cost score or time
+
+For advanced modes:
+
+* Shared crew safety meter
+* Individual stamina for abilities
+
+### 11.5 Score
+
+Score rewards:
+
+* Correct sorting
+* Fast completion
+* Low pressure
+* Few mistakes
+* Bonus valuables rescued
+* No monster feeding
+* Clean finish
+
+Score penalties:
+
+* Wrong sorting
+* Feeding sewer creature
+* Letting trash overflow
+* Character stun
+* Broken machinery ignored
+
+---
+
+## 12. Trash Types
+
+Trash must be visually readable at a glance.
+
+Each item needs:
+
+* Clear silhouette
+* Color-coded category
+* Optional icon marker
+* Weight class
+* Hazard properties
+* Correct destination
+
+### 12.1 Basic Trash Categories
+
+#### Recyclables — Blue
+
+Examples:
+
+* Metal cans
+* Scrap panels
+* Broken droid parts
+* Empty coolant tubes
+* Space bottles
+
+Destination:
+
+* Blue recycling chute or pipe
+
+#### Organics — Green
+
+Examples:
+
+* Alien food scraps
+* Rotten space fruit
+* Bio-sludge sacks
+* Fungal clumps
+* Meat cubes of unclear origin
+
+Destination:
+
+* Green organics pipe
+
+#### Toxic — Purple
+
+Examples:
+
+* Leaking battery cells
+* Glowing ooze barrels
+* Radioactive cubes
+* Chemical sacks
+* Mutant slime jars
+
+Destination:
+
+* Purple toxic pipe
+
+#### General Junk — Gray / Brown
+
+Examples:
+
+* Broken chairs
+* Crates
+* Random machinery chunks
+* Bent pipes
+* Packaging waste
+
+Destination:
+
+* General compactor chute
+* Sometimes used for jam plates
+
+### 12.2 Advanced Trash Types
+
+#### Explosive Junk
+
+* Must be moved carefully
+* Explodes if thrown too hard or left near sparks
+* Can clear slime or stun monster if used strategically
+
+#### Valuable Junk
+
+* Optional bonus items
+* Must be moved to rescue bin, not trash chute
+* Adds score or unlocks cosmetics
+
+#### Monster Bait
+
+* Attracts sewer creature
+* Can be used as distraction
+* Wrong use causes monster to grow or block paths
+
+#### Magnetic Junk
+
+* Sticks to metal surfaces or other junk
+* May require special tool or character
+
+#### Heavy Junk
+
+* Requires M.O.B. or two characters
+* Can block pathways
+* Useful for jam plates
+
+---
+
+## 13. Core Mechanics
+
+### 13.1 Pick Up and Carry
+
+Characters can pick up items if they are within range and the item is not too heavy.
+
+Rules:
+
+* Light junk: all characters can carry
+* Medium junk: most characters can carry, slower movement
+* Heavy junk: only M.O.B. or two-character interaction
+* Hazardous junk: may require special handling or time limit
+
+### 13.2 Throwing
+
+Throwing should be simple and readable.
+
+Controls:
+
+* Hold action to aim
+* Release to throw
+* Quick tap drops item
+
+Throw behavior:
+
+* Light items travel far
+* Heavy items travel short
+* Items bounce slightly
+* Wrong throws can knock into hazards or monster
+
+### 13.3 Sorting
+
+Junk must be delivered to the correct chute, pipe, or bin.
+
+Sorting feedback:
+
+* Correct sort: satisfying sound, points, small sparkle/pop
+* Wrong sort: buzzer, clog risk, warning icon
+* Repeated wrong sort: pipe overload
+
+### 13.4 Jam Plates
+
+Jam plates are numbered pressure platforms that delay or stop the compactor.
+
+Rules:
+
+* Place correct weight/object on plate
+* Some plates need crates
+* Some plates need specific trash type
+* Some plates require multiple plates activated simultaneously
+* Jam duration may be temporary
+
+Example objective:
+
+* “Jam the compactor with 3 crates: 0/3”
+
+### 13.5 Wall Compactor
+
+The walls are the main threat.
+
+Behavior:
+
+* Walls slowly move inward as pressure rises
+* At danger states, wall movement becomes visible
+* Objects near walls may be crushed
+* Crushed junk can become compacted blocks
+* Players caught near walls are stunned or fail the level depending on difficulty
+
+### 13.6 Pipe Rerouting
+
+Pipes carry sorted trash out of the room.
+
+Mechanic:
+
+* Pipes have color-coded routes
+* Valves can redirect routes
+* Some pipes clog
+* Some routes temporarily close
+* Wrong junk into pipe increases clog meter
+
+Glitch should interact with pipe consoles faster than others.
+
+### 13.7 Valves
+
+Valves are physical interaction points.
+
+Use cases:
+
+* Open pipe route
+* Close overflow route
+* Drain slime
+* Redirect toxic waste
+* Lower wall pressure
+
+M.O.B. can turn heavy valves faster.
+
+### 13.8 Hacking Panels
+
+Hacking panels are short mini-interactions, not long puzzle screens during active chaos.
+
+Possible designs:
+
+* Hold interact while a progress bar fills
+* Quick directional sequence
+* Connect two nodes on a small grid
+* Match symbol/color route
+
+For web-first prototype, start with a simple hold-to-hack progress bar.
+
+### 13.9 Emergency Jam
+
+Emergency Jam is a limited-use panic button.
+
+Effect:
+
+* Freezes wall movement briefly
+* Reduces pressure slightly
+* Causes a cooldown
+* May create more junk afterward as side effect
+
+Use:
+
+* Player bailout mechanic
+* Prevents frustration
+* Adds dramatic timing
+
+### 13.10 Sewer Creature
+
+The sewer creature is a recurring hazard.
+
+Behavior:
+
+* Lurks in sludge around the room
+* Tentacles reach into the play area
+* Eats junk if fed
+* Gets angry if toxic waste is mishandled
+* Blocks paths temporarily
+* Can grab items or characters
+
+Mechanics:
+
+* Feed decoy bait to distract it
+* Stun with Zappa’s power surge
+* Avoid letting it eat valuable or wrong junk
+* It may spit junk back into the room
+
+Failure consequence:
+
+* Monster fed too much = pressure spike, hazard spawn, or level failure in challenge mode
+
+---
+
+## 14. Hazards
+
+### 14.1 Slime Pools
+
+* Slow movement
+* May spread from broken pipes
+* Can be cleaned or drained
+* Toxic slime stuns characters briefly
+
+### 14.2 Electrical Sparks
+
+* Appear near broken panels
+* Stun characters
+* Can ignite explosive junk
+* Zappa can temporarily control or repair them
+
+### 14.3 Crusher Walls
+
+* Move inward
+* Destroy objects
+* Can block routes
+* Major pressure threat
+
+### 14.4 Laser Scanners
+
+* Sweep across the floor
+* Stun characters or trigger alarms
+* Can be disabled by hacking
+
+### 14.5 Conveyor Belts
+
+* Move junk automatically
+* Can help or hurt
+* Direction can be changed with panels
+
+### 14.6 Trash Floods
+
+* Sudden wave of junk from chute
+* Pushes items and players
+* Can overload sorting routes
+
+### 14.7 Pipe Bursts
+
+* Burst pipe sprays slime or steam
+* Blocks passage
+* Can be fixed by valve or tool
+
+---
+
+## 15. Level Objectives
+
+Each level should have 1–3 primary objectives and optional bonus objectives.
+
+### 15.1 Primary Objective Examples
+
+* Sort 20 junk items correctly
+* Jam the compactor with 3 crates
+* Keep pressure below 90%
+* Reroute all pipes
+* Survive for 3 minutes
+* Rescue 5 valuables
+* Prevent the sewer creature from eating toxic junk
+* Repair 4 broken panels
+* Drain all sludge before extraction
+
+### 15.2 Optional Bonus Objectives
+
+* No wrong sorts
+* Finish under target time
+* Keep pressure below 70%
+* No character stunned
+* Sort all valuables
+* Do not use Emergency Jam
+* Keep monster hunger below 50%
+
+---
+
+## 16. Level Design
+
+### 16.1 Level Structure
+
+A level should include:
+
+* Spawn points for junk
+* Sorting destinations
+* Movement paths
+* Pressure plates
+* Hazard sources
+* Repair or hack panels
+* Optional bonus item locations
+* Safe zones
+* Emergency route options
+
+### 16.2 Early Level Design Principles
+
+Early levels should be compact and readable.
+
+Do not introduce too many systems at once.
+
+Example early progression:
+
+#### Level 1 — Sorting Day
+
+* One room
+* Three trash types
+* No compactor movement at first
+* Teach pickup, carry, sort
+
+#### Level 2 — The Walls Have Opinions
+
+* Introduce wall pressure
+* One jam plate
+* One crate
+
+#### Level 3 — Pipe Dream
+
+* Introduce pipe color routing
+* One valve
+* Wrong sorting causes clogs
+
+#### Level 4 — Something in the Sludge
+
+* Introduce sewer creature
+* Teach distraction and avoidance
+
+#### Level 5 — Teamwork Required
+
+* Introduce character switching
+* Need Bucket and Glitch abilities
+
+### 16.3 Level Size
+
+Prototype levels should be small:
+
+* 1 to 2 screens worth of space
+* Minimal scrolling early
+* Clear routes
+
+Later levels can expand:
+
+* Multi-room layouts
+* Locked doors
+* Conveyor corridors
+* Split objectives
+
+---
+
+## 17. Difficulty Design
+
+Difficulty should come from overlapping simple problems, not complicated controls.
+
+### 17.1 Difficulty Variables
+
+* Trash spawn rate
+* Number of trash types
+* Pressure increase speed
+* Number of hazards
+* Pipe clog speed
+* Monster aggression
+* Objective count
+* Route complexity
+* Time limit
+* Mistake tolerance
+
+### 17.2 Difficulty Modes
+
+#### Casual
+
+* Slower pressure
+* More forgiving wrong sorts
+* Longer timers
+* More tutorial prompts
+
+#### Standard
+
+* Intended default
+* Moderate pressure
+* Mistakes matter but are recoverable
+
+#### Panic
+
+* Faster pressure
+* Less warning time
+* More hazards
+* Higher score multiplier
+
+#### Endless
+
+* Escalating difficulty until failure
+
+---
+
+## 18. UI and HUD
+
+### 18.1 Required Gameplay HUD Elements
+
+* Wall pressure meter
+* Timer or survival duration
+* Active objectives
+* Character selector/status
+* Carried item indicator
+* Ability cooldowns
+* Emergency Jam button/status
+* Mini-map or room overview for larger levels
+* Warning alerts
+
+### 18.2 HUD Priority
+
+During active gameplay, show only what matters immediately:
+
+Highest priority:
+
+* Pressure
+* Timer
+* Current objective
+* Current character
+* Carried item
+* Ability cooldown
+* Danger alerts
+
+Lower priority:
+
+* Score details
+* Bonus objectives
+* Full tutorial text
+* Detailed character stats
+* Mini-map on small screens
+
+### 18.3 Warning System
+
+Warnings should be visual and audio:
+
+* Pressure rising
+* Wall movement imminent
+* Pipe clogging
+* Wrong trash type
+* Monster approaching
+* Hazard active
+* Objective almost failed
+
+Warnings should use:
+
+* Flashing border
+* Icon above hazard
+* Short text callout
+* Sound cue
+* Optional controller/touch vibration on supported platforms
+
+### 18.4 Pause Screen
+
+Pause screen should include:
+
+* Resume
+* Restart level
+* Controls
+* Objectives
+* Settings
+* Exit to level select
+
+### 18.5 Results Screen
+
+After each level:
+
+* Completion grade
+* Time
+* Correct sorts
+* Wrong sorts
+* Highest pressure reached
+* Monster incidents
+* Bonus objectives completed
+* Coins/scrap earned
+* Unlocks
+
+---
+
+## 19. Visual Style
+
+### 19.1 Art Direction
+
+Use a colorful cartoon sci-fi style.
+
+Key visual traits:
+
+* Chunky silhouettes
+* Bright color coding
+* Expressive characters
+* Gross but funny trash/slime
+* Industrial sci-fi machinery
+* Readable icons
+* Not realistic horror
+* Not grimdark
+
+### 19.2 Camera Readability
+
+Objects must be identifiable from gameplay distance.
+
+Requirements:
+
+* Trash categories color-coded
+* Hazards animated clearly
+* Character outlines distinct
+* Important interactables glow or pulse subtly
+* Wall pressure visually communicated by wall movement, lights, and UI
+
+### 19.3 Environment Themes
+
+Possible chamber themes:
+
+1. Basic garbage chamber
+2. Toxic waste room
+3. Organic recycling swamp chamber
+4. Luxury cruiser trash bay
+5. Villain fortress disposal room
+6. Space diner kitchen compactor
+7. Robot scrapyard
+8. Alien zoo waste processor
+9. Corporate recycling center
+10. Final mega-compactor core
+
+### 19.4 Animation Style
+
+Animations should be snappy and readable:
+
+* Pick up pop
+* Throw arc
+* Wrong sort shake/buzz
+* Correct sort sparkle
+* Pressure pulse
+* Wall rumble
+* Slime splat
+* Monster tentacle warning shadow
+* Character stun spin/stars
+
+---
+
+## 20. Audio Direction
+
+### 20.1 Music
+
+Music should be energetic and comedic.
+
+Style:
+
+* Sci-fi arcade
+* Percussive industrial rhythm
+* Escalates as pressure rises
+* Brief stingers for panic events
+
+### 20.2 Sound Effects
+
+Important sound cues:
+
+* Pickup
+* Drop
+* Throw
+* Correct sort
+* Wrong sort
+* Pipe clog
+* Pressure rising
+* Wall movement
+* Monster growl
+* Slime splash
+* Electrical zap
+* Button press
+* Level complete
+* Failure
+
+### 20.3 Voice / Barks
+
+Optional but valuable:
+
+* Short character quips
+* Announcer warnings
+* Monster noises
+* Corporate safety messages
+
+Examples:
+
+* “Wall pressure rising.”
+* “Organic matter detected. Probably.”
+* “Please do not anger the disposal ecosystem.”
+* “Your survival is appreciated.”
+
+---
+
+## 21. Progression and Rewards
+
+### 21.1 Level Grades
+
+Possible grades:
+
+* C: survived
+* B: completed with some mistakes
+* A: good time and pressure control
+* S: all bonus objectives
+
+### 21.2 Unlocks
+
+Unlock types:
+
+* New characters
+* Character skins
+* New tools
+* New chamber themes
+* New challenge levels
+* Funny safety posters
+* Cosmetic trash effects
+
+### 21.3 Currency
+
+Use a simple currency such as **Scrap Tokens**.
+
+Earned from:
+
+* Level completion
+* Bonus objectives
+* Valuable junk saved
+* Arcade milestones
+
+Spent on:
+
+* Cosmetic unlocks
+* Optional ability upgrades
+* Challenge modifiers
+
+Be careful with upgrades. The game should remain skill-based. Upgrades should not break level balance.
+
+---
+
+## 22. Multiplayer and Co-op Scope
+
+### 22.1 Recommended First Build
+
+Start with **single-player character switching**.
+
+Reason:
+
+* Easier to build
+* Easier to tune
+* Same mechanics can later support co-op
+* Avoids networking complexity early
+
+### 22.2 Local Co-op Later
+
+Local co-op is a strong fit for Windows and desktop web.
+
+Implementation considerations:
+
+* Keyboard sharing is awkward but possible
+* Controller support is better
+* Camera must handle multiple players
+* UI must show multiple player statuses
+
+### 22.3 Online Co-op Later
+
+Online co-op is not recommended for the first complete version unless the developer already has multiplayer expertise.
+
+Online adds:
+
+* Latency handling
+* Syncing physics/items
+* Reconnects
+* Matchmaking/lobbies
+* Cross-platform input differences
+* More QA burden
+
+Architecture should not block it, but it should not be a first-version dependency.
+
+---
+
+## 23. Technical Architecture Recommendation
+
+### 23.1 Engine Options
+
+#### Option A — Godot
+
+Strong candidate.
+
+Pros:
+
+* Exports to web, Windows, Android
+* Good 2D support
+* Lightweight
+* Friendly for top-down games
+* Scene/node system fits this type of game
+
+Cons:
+
+* Web export can have browser quirks
+* Android export setup requires care
+* Asset pipeline must be organized well
+
+#### Option B — Unity
+
+Also viable.
+
+Pros:
+
+* Mature export pipeline
+* Strong tooling
+* Good Android/Windows support
+* Large developer ecosystem
+
+Cons:
+
+* Heavier
+* WebGL builds can be large
+* More overhead for a simple 2D game
+
+#### Option C — Phaser / PixiJS Web First
+
+Good for fast web prototyping.
+
+Pros:
+
+* Very fast browser iteration
+* Great for 2D web games
+* Easy deployment
+
+Cons:
+
+* Android and Windows require wrappers or rework
+* Touch/controller handling must be planned carefully
+* Performance depends heavily on browser/device
+
+### 23.2 Practical Recommendation
+
+If the goal is truly Windows + Android + Web, use **Godot** or **Unity** rather than a web-only framework.
+
+If the goal is fastest concept testing, use **Phaser/PixiJS** for prototype, but expect extra work later.
+
+Best compromise:
+
+* Build prototype in Godot with Web export from day one
+* Keep rendering 2D/isometric
+* Avoid engine-specific hacks
+* Export web first for playtesting
+* Later export Windows and Android
+
+---
+
+## 24. Data-Driven Content
+
+The game should define content in data files where possible.
+
+Data should include:
+
+* Trash item definitions
+* Level layouts
+* Objective definitions
+* Character stats
+* Ability cooldowns
+* Hazard spawn rules
+* Dialogue bark lists
+* Scoring values
+* Difficulty modifiers
+
+Example trash definition fields:
+
+* id
+* displayName
+* category
+* weightClass
+* hazardType
+* correctDestination
+* scoreValue
+* wrongSortPenalty
+* canBeThrown
+* canBeCrushed
+* monsterInterest
+
+Example level fields:
+
+* id
+* name
+* environmentTheme
+* layoutMap
+* objectives
+* trashSpawnRules
+* hazardRules
+* pressureRules
+* timeLimit
+* availableCharacters
+* bonusObjectives
+
+---
+
+## 25. Prototype Scope
+
+### 25.1 First Playable Prototype
+
+The first prototype should prove the core loop only.
+
+Include:
+
+* One room
+* One playable character
+* Movement
+* Pickup/drop/throw
+* Three trash categories
+* Three matching chutes
+* Wall pressure meter
+* One jam plate
+* One crate
+* Timer
+* Win/fail state
+* Basic HUD
+
+Do not include yet:
+
+* Full campaign
+* All characters
+* Complex pipe routing
+* Sewer monster AI
+* Cosmetics
+* Online multiplayer
+* Full Android layout
+
+### 25.2 Second Prototype
+
+Add:
+
+* Character switching
+* Two characters with different abilities
+* Pipe rerouting
+* Clog meter
+* More level hazards
+* Improved HUD scaling
+
+### 25.3 Third Prototype
+
+Add:
+
+* Sewer creature
+* Four characters
+* Three levels
+* Results screen
+* Touch control test layout
+* Controller support test
+
+---
+
+## 26. Minimum Viable Product Scope
+
+MVP should include enough content to feel like a complete small game.
+
+Recommended MVP:
+
+* 12 campaign levels
+* 4 playable characters
+* 8–12 trash item types
+* 3 core trash categories
+* 4 hazard types
+* Wall pressure system
+* Pipe routing system
+* Sewer creature system
+* Character switching
+* Basic controller support
+* Android landscape touch controls
+* Level select
+* Results screen
+* Settings screen
+* Save progress
+* Web build
+* Windows build
+* Android build
+
+Optional for MVP:
+
+* Local co-op
+* Endless arcade mode
+* Cosmetics
+
+Not recommended for MVP:
+
+* Online co-op
+* Level editor
+* Monetization
+* Complex RPG-style upgrades
+
+---
+
+## 27. Full Version Scope
+
+A fuller finished version could include:
+
+* 30–50 campaign levels
+* 6–8 characters
+* Multiple chamber themes
+* Arcade/endless mode
+* Challenge mode
+* Local co-op
+* Controller support
+* More hazards
+* Boss compactor events
+* Cosmetic unlocks
+* Daily/weekly challenge seeds for web
+* Leaderboards, if infrastructure exists
+
+---
+
+## 28. Save System
+
+Save data should track:
+
+* Completed levels
+* Level grades
+* Bonus objectives completed
+* Unlocked characters
+* Unlocked cosmetics
+* Settings
+* Control preferences
+* Currency
+
+For web:
+
+* Local storage or IndexedDB for prototype
+* Optional cloud save later
+
+For Windows/Android:
+
+* Local file / app storage
+* Platform-appropriate persistent data path
+
+---
+
+## 29. Settings
+
+Required settings:
+
+* Music volume
+* SFX volume
+* UI scale
+* Fullscreen/windowed for Windows/web
+* Control remapping for keyboard/controller
+* Touch control opacity and position for Android
+* Screen shake intensity
+* Colorblind-friendly indicators
+* Reduced flashing mode
+
+Accessibility should be considered early because color-coded trash is central to gameplay.
+
+---
+
+## 30. Accessibility Requirements
+
+### 30.1 Colorblind Support
+
+Trash categories must not rely on color alone.
+
+Use:
+
+* Color
+* Icon
+* Shape language
+* Label on close inspection
+* Destination symbol matching
+
+### 30.2 Readability
+
+* High contrast HUD
+* Avoid tiny text on mobile
+* Pause screen should explain objectives clearly
+* Warning icons must be distinct
+
+### 30.3 Timing Options
+
+Casual mode should allow:
+
+* Slower pressure
+* Longer timers
+* Reduced hazard frequency
+
+### 30.4 Input Options
+
+* Keyboard remapping
+* Controller support
+* Touch control customization
+* Hold/toggle options where useful
+
+---
+
+## 31. Performance Requirements
+
+### 31.1 Web
+
+Target:
+
+* 60 FPS on modern desktop browsers
+* Fast load time
+* Reasonable asset size
+* Avoid huge uncompressed textures
+
+### 31.2 Android
+
+Target:
+
+* 60 FPS on mid-range devices if possible
+* 30 FPS minimum acceptable fallback
+* Limit particle effects
+* Avoid excessive transparent overdraw
+* Keep UI efficient
+
+### 31.3 Windows
+
+Target:
+
+* 60 FPS at 1080p
+* Support fullscreen/windowed
+* Controller support
+
+---
+
+## 32. Art Asset Requirements
+
+### 32.1 Character Assets
+
+Each playable character needs:
+
+* Idle animation
+* Walk/run animation in 4 or 8 directions
+* Pick up animation
+* Carry animation
+* Throw animation
+* Interact animation
+* Ability animation
+* Stun animation
+* Victory animation
+* Failure animation
+
+### 32.2 Trash Assets
+
+Each trash item needs:
+
+* Ground sprite/model
+* Carried state
+* Thrown state
+* Impact effect
+* Correct disposal effect
+* Wrong disposal effect
+
+### 32.3 Environment Assets
+
+Needed:
+
+* Floor tiles
+* Walls
+* Moving compactor walls
+* Chutes
+* Pipes
+* Valves
+* Consoles
+* Jam plates
+* Crates
+* Slime pools
+* Sparks
+* Conveyor belts
+* Doors/gates
+* Decorative trash piles
+
+### 32.4 UI Assets
+
+Needed:
+
+* Pressure meter
+* Timer panel
+* Objective panel
+* Character portraits
+* Ability icons
+* Trash category icons
+* Warning icons
+* Touch controls
+* Buttons
+* Result stars/grades
+
+---
+
+## 33. Game Feel Requirements
+
+The game must feel responsive.
+
+Important details:
+
+* Pickups should snap quickly
+* Throwing should feel punchy
+* Correct sorting should feel satisfying
+* Pressure increases should feel tense but fair
+* Mistakes should be obvious
+* Hazards should telegraph before hitting
+* Character switching should be fast
+* Emergency Jam should feel powerful
+
+Avoid:
+
+* Sluggish movement
+* Hard-to-select items
+* Overlapping interact prompts
+* Tiny collision boxes
+* Unclear trash category visuals
+* Failure without warning
+
+---
+
+## 34. Failure States
+
+Possible failures:
+
+* Wall pressure reaches 100%
+* Timer expires
+* Critical objective fails
+* Monster consumes forbidden item
+* Too many wrong sorts
+
+Failure screen should be funny, not punishing.
+
+Example messages:
+
+* “Compacted with enthusiasm.”
+* “The trash won.”
+* “Corporate has promoted your remains to mulch.”
+* “The sewer thing has filed a complaint.”
+
+---
+
+## 35. Monetization
+
+No monetization is required for the core scope.
+
+If monetization is ever considered:
+
+* Avoid pay-to-win
+* Cosmetic-only unlocks are safest
+* Premium full-game purchase is cleaner than ads/IAP for this kind of game
+
+For now, monetization should not drive design decisions.
+
+---
+
+## 36. Legal / IP Positioning
+
+This should be developed as an original sci-fi comedy game.
+
+Avoid:
+
+* Specific Star Wars names
+* Recognizable characters
+* Recognizable uniforms
+* Recognizable ships
+* Specific logos/symbols
+* Direct scene recreation
+* Famous dialogue or music references
+
+Use broad genre parody instead:
+
+* Evil space corporations
+* Generic battle stations
+* Cosmic garbage rooms
+* Bucket-helmet minions
+* Alien maintenance crews
+* Absurd bureaucracy
+
+---
+
+## 37. Development Milestones
+
+### Milestone 1 — Core Movement Prototype
+
+* Basic room
+* Player movement
+* Pickup/drop/throw
+* One trash item
+* One disposal chute
+
+### Milestone 2 — Sorting Prototype
+
+* Three trash categories
+* Correct/wrong sorting
+* Score
+* Basic objective completion
+
+### Milestone 3 — Pressure Prototype
+
+* Wall pressure meter
+* Wall movement
+* Jam plate
+* Failure state
+
+### Milestone 4 — Character Prototype
+
+* Two characters
+* Character switching
+* One unique ability each
+
+### Milestone 5 — Pipe Prototype
+
+* Pipes
+* Valves
+* Clog meter
+* Rerouting objective
+
+### Milestone 6 — Hazard Prototype
+
+* Slime
+* Sparks
+* Conveyor belt or laser scanner
+
+### Milestone 7 — Sewer Creature Prototype
+
+* Creature warning
+* Tentacle hazard
+* Bait/distraction
+* Monster meter
+
+### Milestone 8 — UI/Platform Prototype
+
+* Responsive HUD
+* Web build testing
+* Keyboard/controller input abstraction
+* Android landscape touch mockup
+
+### Milestone 9 — MVP Content
+
+* 12 levels
+* 4 characters
+* Results screen
+* Save progress
+* Settings
+
+### Milestone 10 — Platform Builds
+
+* Web release candidate
+* Windows packaged build
+* Android packaged build
+* Platform QA
+
+---
+
+## 38. Open Questions for Developer / Designer
+
+These should be decided before production:
+
+1. Which engine will be used?
+2. Will the art be 2D sprites, 2.5D, or lightweight 3D?
+3. Is local co-op part of MVP or post-MVP?
+4. Will Android support only landscape?
+5. How many levels are required for the first complete release?
+6. Will there be upgrades or only cosmetics?
+7. Will the sewer creature be present in every level or special levels only?
+8. Should the game have persistent campaign progression or arcade-style unlocks?
+9. How much dialogue/voice acting is planned?
+10. Will web save data be local only or account-based?
+
+---
+
+## 39. Recommended Immediate Next Step
+
+Build a web-playable prototype with the following exact scope:
+
+* One room
+* One character
+* Three trash categories
+* Three destination pipes
+* One jam plate
+* One crate
+* Wall pressure meter
+* Timer
+* Basic score
+* Win condition: sort 15 items and keep pressure under 100%
+* Fail condition: pressure reaches 100% or timer expires
+* Keyboard controls
+* Simple responsive HUD for 16:9 and 16:10
+
+Do not start with the full cast, full campaign, or platform builds. The first proof should determine whether the core loop is fun before expanding.
+
+---
+
+## 40. Success Criteria
+
+The prototype is successful if:
+
+* The player understands what to do within 30 seconds
+* Sorting trash feels clear and satisfying
+* Wall pressure creates tension without feeling unfair
+* The jam plate creates meaningful decision-making
+* The UI remains readable at common desktop sizes
+* The game loop is fun enough to replay after losing
+* The mechanics can plausibly expand into character abilities, pipe routing, and hazards
+
+The full game is successful if it delivers fast, funny, readable chaos without overwhelming the player with unclear systems.

@@ -1,0 +1,40 @@
+{
+  "name": "trash-compactor-panic",
+  "version": "0.1.0",
+  "description": "Web-first playable prototype for Trash Compactor Panic.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "smoke": "node scripts/smoke-test.mjs",
+    "deploy": "node scripts/deploy-sftp.mjs",
+    "setup:remote": "node scripts/deploy-sftp.mjs --setup-only"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ungabo/trash-compactor-panic.git"
+  },
+  "keywords": [
+    "game",
+    "phaser",
+    "typescript",
+    "prototype"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/ungabo/trash-compactor-panic/issues"
+  },
+  "homepage": "https://github.com/ungabo/trash-compactor-panic#readme",
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "playwright": "^1.60.0",
+    "ssh2-sftp-client": "^12.1.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14"
+  }
+}
